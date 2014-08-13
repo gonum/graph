@@ -167,13 +167,16 @@ type Mutable interface {
 // be returned as Edge{tail,head}. Thus there's a conflict that cannot be resolved between the
 // two interface requirements.
 type MutableGraph interface {
-	CostGraph
 	Mutable
+	Graph
 
 	// Like EdgeBetween in Graph, AddUndirectedEdge adds an edge between two nodes.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
 	// if the nodes already exist it should NOT replace existing nodes with e.Head() or
 	// e.Tail(). Overwriting nodes should explicitly be done with another call to AddNode()
+	//
+	// The argument cost may, but is not required to be ignored if this graph does not implement
+	// Coster
 	AddUndirectedEdge(e Edge, cost float64)
 
 	// RemoveEdge clears the stored edge between two nodes. Calling this will never
@@ -187,18 +190,35 @@ type MutableGraph interface {
 // notes, however, a graph cannot safely implement MutableGraph and MutableDirectedGraph
 // at the same time, because of the functionality of a EdgeTo in DirectedGraph.
 type MutableDirectedGraph interface {
-	CostDirectedGraph
 	Mutable
+	DirectedGraph
 
 	// Like EdgeTo in DirectedGraph, AddDirectedEdge adds an edge FROM head TO tail.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
 	// if the nodes already exist it should NOT replace existing nodes with e.Head() or
 	// e.Tail(). Overwriting nodes should explicitly be done with another call to AddNode()
+	//
+	// The argument cost may, but is not required to be ignored if this graph does not implement
+	// Coster
 	AddDirectedEdge(e Edge, cost float64)
 
 	// Removes an edge FROM e.Head TO e.Tail. If no such edge exists, this is a no-op,
 	// not an error.
 	RemoveDirectedEdge(Edge)
+}
+
+// A MutableGraph that implements Coster. If this is implemented,
+// AddUndirectedEdge may not ignore the cost argument.
+type MutableCostGraph interface {
+	MutableGraph
+	Coster
+}
+
+// A MutableDirectedGraph that implements Coster. If this is implemented,
+// AddDirectedEdge may not ignore the cost argument.
+type MutableDirectedCostGraph interface {
+	MutableDirectedGraph
+	Coster
 }
 
 // A function that returns the cost of following an edge
