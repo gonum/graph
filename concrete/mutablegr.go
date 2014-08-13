@@ -44,6 +44,8 @@ type WeightedEdge struct {
 // MutableGraph). For most purposes, creating your own graph is probably better. For instance,
 // see TileGraph for an example of an immutable 2D grid of tiles that also implements the Graph
 // interface, but would be more suitable if all you needed was a simple undirected 2D grid.
+//
+// This graph implements MutableCostGraph
 type Graph struct {
 	neighbors map[int]map[int]WeightedEdge
 	nodeMap   map[int]graph.Node

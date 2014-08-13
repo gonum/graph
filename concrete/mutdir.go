@@ -12,6 +12,8 @@ import (
 //
 // In most cases it's likely more desireable to use a graph specific to your
 // problem domain.
+//
+// This graph implements MutableDirectedCostGraph
 type DirectedGraph struct {
 	successors   map[int]map[int]WeightedEdge
 	predecessors map[int]map[int]WeightedEdge
