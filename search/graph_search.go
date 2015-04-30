@@ -404,7 +404,7 @@ func Dominators(start graph.Node, g graph.FiniteBackwardGraph) map[int]Set {
 //
 // This returns all possible post-dominators for all nodes, it does not prune for strict
 // postdominators, immediate postdominators etc.
-func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
+func PostDominators(end graph.Node, g graph.FiniteForwardGraph) map[int]Set {
 	successors := setupFuncs(g, nil, nil).successors
 
 	allNodes := make(Set)
@@ -429,13 +429,13 @@ func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
 			if node.ID() == end.ID() {
 				continue
 			}
-			succs := successors(node)
-			if len(succs) == 0 {
+			edges := g.Out(node)
+			if len(edges) == 0 {
 				continue
 			}
-			tmp := make(Set).copy(dominators[succs[0].ID()])
-			for _, succ := range succs[1:] {
-				tmp.intersect(tmp, dominators[succ.ID()])
+			tmp := make(Set).copy(dominators[edges[0].Tail().ID()])
+			for _, edge := range succs[1:] {
+				tmp.intersect(tmp, dominators[edge[0].Tail().ID()])
 			}
 
 			dom := make(Set)
