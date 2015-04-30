@@ -227,42 +227,6 @@ func DepthFirstSearch(start, goal graph.Node, g SourceSearchGraph) []graph.Node 
 	return nil
 }
 
-/* Simple operations */
-
-// Copies a graph into the destination; maintaining all node IDs. The destination
-// need not be empty, though overlapping node IDs and conflicting edges will overwrite
-// existing data.
-func CopyUndirectedGraph(dst graph.MutableGraph, src graph.Graph) {
-	cost := setupFuncs(src, nil, nil).cost
-
-	for _, node := range src.NodeList() {
-		succs := src.Neighbors(node)
-		dst.AddNode(node)
-		for _, succ := range succs {
-			edge := src.EdgeBetween(node, succ)
-			dst.AddUndirectedEdge(edge, cost(edge))
-		}
-	}
-
-}
-
-// Copies a graph into the destination; maintaining all node IDs. The destination
-// need not be empty, though overlapping node IDs and conflicting edges will overwrite
-// existing data.
-func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) {
-	cost := setupFuncs(src, nil, nil).cost
-
-	for _, node := range src.NodeList() {
-		succs := src.Successors(node)
-		dst.AddNode(node)
-		for _, succ := range succs {
-			edge := src.EdgeTo(node, succ)
-			dst.AddDirectedEdge(edge, cost(edge))
-		}
-	}
-
-}
-
 /* Basic Graph tests */
 
 // TarjanSCC returns the strongly connected components of the graph g using Tarjan's algorithm.
