@@ -19,28 +19,34 @@ type Edge interface {
 	Tail() Node
 }
 
+// A Graph implements the behavior of a graph.
+type Graph interface {
+	// Has returns whether the graph has the given node.
+	Has(Node) bool
+
+	// Nodes returns all nodes in the graph.
+	Nodes() []Node
+
+	// From returns all nodes that can be reached from
+	// the given node.
+	From(Node) []Node
+
+	// HasEdge returns an edge exists between node u and v.
+	HasEdge(u, v Node) bool
+}
+
 // A Graph implements the behavior of an undirected graph.
 //
 // All methods in Graph are implicitly undirected. Graph algorithms that care about directionality
 // will intelligently choose the DirectedGraph behavior if that interface is also implemented,
 // even if the function itself only takes in a Graph (or a super-interface of graph).
-type Graph interface {
-	// NodeExists returns true when node is currently in the graph.
-	NodeExists(Node) bool
+type UndirectedGraph interface {
+	Graph
 
-	// NodeList returns a list of all nodes in no particular order, useful for
-	// determining things like if a graph is fully connected. The caller is
-	// free to modify this list. Implementations should construct a new list
-	// and not return internal representation.
-	NodeList() []Node
-
-	// Neighbors returns all nodes connected by any edge to this node.
-	Neighbors(Node) []Node
-
-	// EdgeBetween returns an edge between node and neighbor such that
+	// EdgeBetween returns the edge between node u and v such that
 	// Head is one argument and Tail is the other. If no
 	// such edge exists, this function returns nil.
-	EdgeBetween(node, neighbor Node) Edge
+	EdgeBetween(u, v Node) Edge
 }
 
 // Directed graphs are characterized by having seperable Heads and Tails in their edges.
@@ -51,23 +57,20 @@ type Graph interface {
 // because in many cases it can be useful to know all neighbors regardless of direction.
 type DirectedGraph interface {
 	Graph
-	// From gives the nodes connected by OUTBOUND edges.
-	// If the graph is an undirected graph, this set is equal to To.
-	From(Node) []Node
-
-	// EdgeTo returns an edge between node and successor such that
-	// Head returns node and Tail returns successor, if no
-	// such edge exists, this function returns nil.
-	EdgeTo(node, successor Node) Edge
 
 	// To gives the nodes connected by INBOUND edges.
 	// If the graph is an undirected graph, this set is equal to From.
 	To(Node) []Node
+
+	// EdgeFromTo returns an edge between node u and v such that
+	// Head is one argument and Tail is the other. If no
+	// such edge exists, this function returns nil.
+	EdgeFromTo(u, v Node) Edge
 }
 
 // Returns all undirected edges in the graph
 type EdgeLister interface {
-	EdgeList() []Edge
+	Edges() []Edge
 }
 
 type EdgeListGraph interface {
@@ -77,7 +80,7 @@ type EdgeListGraph interface {
 
 // Returns all directed edges in the graph.
 type DirectedEdgeLister interface {
-	DirectedEdgeList() []Edge
+	DirectedEdges() []Edge
 }
 
 type DirectedEdgeListGraph interface {

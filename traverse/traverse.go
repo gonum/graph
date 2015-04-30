@@ -24,19 +24,26 @@ type BreadthFirst struct {
 // for which until(node, depth) is true. During the traversal, if the Visit field is
 // non-nil, it is called with the nodes joined by each followed edge.
 func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.Node, d int) bool) graph.Node {
-	var neighbors func(graph.Node) []graph.Node
-	switch g := g.(type) {
-	case graph.DirectedGraph:
-		neighbors = g.From
-	default:
-		neighbors = g.Neighbors
-	}
-
 	if b.visited == nil {
 		b.visited = make(internal.IntSet)
 	}
 	b.queue.Enqueue(from)
 	b.visited.Add(from.ID())
+
+	var edgeFor func(u, v graph.Node) graph.Edge
+	switch g := g.(type) {
+	case graph.UndirectedGraph:
+		edgeFor = g.EdgeBetween
+	case graph.DirectedGraph:
+		edgeFor = g.EdgeFromTo
+	default:
+		edgeFor = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
 
 	var (
 		depth     int
@@ -48,8 +55,8 @@ func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.N
 		if until != nil && until(t, depth) {
 			return t
 		}
-		for _, n := range neighbors(t) {
-			if b.EdgeFilter != nil && !b.EdgeFilter(g.EdgeBetween(t, n)) {
+		for _, n := range g.From(t) {
+			if b.EdgeFilter != nil && !b.EdgeFilter(edgeFor(t, n)) {
 				continue
 			}
 			if b.visited.Has(n.ID()) {
@@ -76,13 +83,9 @@ func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.N
 // of their direction. The functions before and after are called prior to commencing
 // and after completing each walk if they are non-nil respectively. The function
 // during is called on each node as it is traversed.
-func (b *BreadthFirst) WalkAll(g graph.Graph, before, after func(), during func(graph.Node)) {
-	// Ensure that when we pass a directed graph
-	// we use neighbors and not successors.
-	g = struct{ graph.Graph }{g}
-
+func (b *BreadthFirst) WalkAll(g graph.UndirectedGraph, before, after func(), during func(graph.Node)) {
 	b.Reset()
-	for _, from := range g.NodeList() {
+	for _, from := range g.Nodes() {
 		if b.Visited(from) {
 			continue
 		}
@@ -127,27 +130,34 @@ type DepthFirst struct {
 // for which until(node) is true. During the traversal, if the Visit field is non-nil, it
 // is called with the nodes joined by each followed edge.
 func (d *DepthFirst) Walk(g graph.Graph, from graph.Node, until func(graph.Node) bool) graph.Node {
-	var neighbors func(graph.Node) []graph.Node
-	switch g := g.(type) {
-	case graph.DirectedGraph:
-		neighbors = g.From
-	default:
-		neighbors = g.Neighbors
-	}
-
 	if d.visited == nil {
 		d.visited = make(internal.IntSet)
 	}
 	d.stack.Push(from)
 	d.visited.Add(from.ID())
 
+	var edgeFor func(u, v graph.Node) graph.Edge
+	switch g := g.(type) {
+	case graph.UndirectedGraph:
+		edgeFor = g.EdgeBetween
+	case graph.DirectedGraph:
+		edgeFor = g.EdgeFromTo
+	default:
+		edgeFor = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
+
 	for d.stack.Len() > 0 {
 		t := d.stack.Pop()
 		if until != nil && until(t) {
 			return t
 		}
-		for _, n := range neighbors(t) {
-			if d.EdgeFilter != nil && !d.EdgeFilter(g.EdgeBetween(t, n)) {
+		for _, n := range g.From(t) {
+			if d.EdgeFilter != nil && !d.EdgeFilter(edgeFor(t, n)) {
 				continue
 			}
 			if d.visited.Has(n.ID()) {
@@ -168,13 +178,9 @@ func (d *DepthFirst) Walk(g graph.Graph, from graph.Node, until func(graph.Node)
 // of their direction. The functions before and after are called prior to commencing
 // and after completing each walk if they are non-nil respectively. The function
 // during is called on each node as it is traversed.
-func (d *DepthFirst) WalkAll(g graph.Graph, before, after func(), during func(graph.Node)) {
-	// Ensure that when we pass a directed graph
-	// we use neighbors and not successors.
-	g = struct{ graph.Graph }{g}
-
+func (d *DepthFirst) WalkAll(g graph.UndirectedGraph, before, after func(), during func(graph.Node)) {
 	d.Reset()
-	for _, from := range g.NodeList() {
+	for _, from := range g.Nodes() {
 		if d.Visited(from) {
 			continue
 		}
@@ -204,3 +210,10 @@ func (d *DepthFirst) Reset() {
 	d.stack = d.stack[:0]
 	d.visited = nil
 }
+
+type edge struct {
+	u, v graph.Node
+}
+
+func (e edge) Head() graph.Node { return e.u }
+func (e edge) Tail() graph.Node { return e.v }

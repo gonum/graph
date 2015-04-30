@@ -112,7 +112,7 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 	sf := setupFuncs(g, cost, nil)
 	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
 
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
 	costs = make(map[int]float64, len(nodes)) // May overallocate, will change if it becomes a problem
 	predecessor := make(map[int]graph.Node, len(nodes))
@@ -171,7 +171,7 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	nodeIDMap := make(map[int]graph.Node)
 	nodeIDMap[source.ID()] = source
 	costs[source.ID()] = 0
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 
 	for i := 1; i < len(nodes)-1; i++ {
 		for _, node := range nodes {
@@ -229,9 +229,9 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 
 	/* Copy graph into a mutable one since it has to be altered for this algorithm */
 	dummyGraph := concrete.NewDirectedGraph()
-	for _, node := range g.NodeList() {
+	for _, node := range g.Nodes() {
 		neighbors := from(node)
-		dummyGraph.NodeExists(node)
+		dummyGraph.Has(node)
 		dummyGraph.AddNode(node)
 		for _, neighbor := range neighbors {
 			e := edgeTo(node, neighbor)
@@ -251,7 +251,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 	/* Step 1: Dummy node with 0 cost edge weights to every other node*/
 	dummyNode := dummyGraph.NewNode()
 	dummyGraph.AddNode(dummyNode)
-	for _, node := range g.NodeList() {
+	for _, node := range g.Nodes() {
 		dummyGraph.AddDirectedEdge(concrete.Edge{dummyNode, node}, 0)
 	}
 
@@ -262,7 +262,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 	}
 
 	/* Step 3: reweight the graph and remove the dummy node */
-	for _, node := range g.NodeList() {
+	for _, node := range g.Nodes() {
 		for _, succ := range from(node) {
 			e := edgeTo(node, succ)
 			dummyGraph.AddDirectedEdge(e, cost(e)+costs[node.ID()]-costs[succ.ID()])
@@ -272,10 +272,10 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 	dummyGraph.RemoveNode(dummyNode)
 
 	/* Step 4: Run Dijkstra's starting at every node */
-	nodePaths = make(map[int]map[int][]graph.Node, len(g.NodeList()))
+	nodePaths = make(map[int]map[int][]graph.Node, len(g.Nodes()))
 	nodeCosts = make(map[int]map[int]float64)
 
-	for _, node := range g.NodeList() {
+	for _, node := range g.Nodes() {
 		nodePaths[node.ID()], nodeCosts[node.ID()] = Dijkstra(node, dummyGraph, nil)
 	}
 
@@ -338,18 +338,16 @@ func UniformCost(e graph.Edge) float64 {
 // Copies a graph into the destination; maintaining all node IDs. The destination
 // need not be empty, though overlapping node IDs and conflicting edges will overwrite
 // existing data.
-func CopyUndirectedGraph(dst graph.MutableGraph, src graph.Graph) {
+func CopyUndirectedGraph(dst graph.MutableGraph, src graph.UndirectedGraph) {
 	cost := setupFuncs(src, nil, nil).cost
 
-	for _, node := range src.NodeList() {
-		succs := src.Neighbors(node)
+	for _, node := range src.Nodes() {
 		dst.AddNode(node)
-		for _, succ := range succs {
+		for _, succ := range src.From(node) {
 			edge := src.EdgeBetween(node, succ)
 			dst.AddUndirectedEdge(edge, cost(edge))
 		}
 	}
-
 }
 
 // Copies a graph into the destination; maintaining all node IDs. The destination
@@ -358,11 +356,11 @@ func CopyUndirectedGraph(dst graph.MutableGraph, src graph.Graph) {
 func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) {
 	cost := setupFuncs(src, nil, nil).cost
 
-	for _, node := range src.NodeList() {
+	for _, node := range src.Nodes() {
 		succs := src.From(node)
 		dst.AddNode(node)
 		for _, succ := range succs {
-			edge := src.EdgeTo(node, succ)
+			edge := src.EdgeFromTo(node, succ)
 			dst.AddDirectedEdge(edge, cost(edge))
 		}
 	}
@@ -381,7 +379,7 @@ func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) 
 // only a little extra testing.)
 //
 func TarjanSCC(g graph.DirectedGraph) [][]graph.Node {
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 	t := tarjan{
 		succ: g.From,
 
@@ -476,7 +474,7 @@ func IsPath(path []graph.Node, g graph.Graph) bool {
 	if path == nil || len(path) == 0 {
 		return true
 	} else if len(path) == 1 {
-		return g.NodeExists(path[0])
+		return g.Has(path[0])
 	}
 
 	for i := 0; i < len(path)-1; i++ {
@@ -501,7 +499,7 @@ func Prim(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
 	sf := setupFuncs(g, cost, nil)
 	cost = sf.cost
 
-	nlist := g.NodeList()
+	nlist := g.Nodes()
 
 	if nlist == nil || len(nlist) == 0 {
 		return
@@ -513,12 +511,12 @@ func Prim(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
 		remainingNodes.Add(node.ID())
 	}
 
-	edgeList := g.EdgeList()
+	edgeList := g.Edges()
 	for remainingNodes.Count() != 0 {
 		var edges []concrete.WeightedEdge
 		for _, edge := range edgeList {
-			if (dst.NodeExists(edge.Head()) && remainingNodes.Has(edge.Tail().ID())) ||
-				(dst.NodeExists(edge.Tail()) && remainingNodes.Has(edge.Head().ID())) {
+			if (dst.Has(edge.Head()) && remainingNodes.Has(edge.Tail().ID())) ||
+				(dst.Has(edge.Tail()) && remainingNodes.Has(edge.Head().ID())) {
 
 				edges = append(edges, concrete.WeightedEdge{Edge: edge, Cost: cost(edge)})
 			}
@@ -541,7 +539,7 @@ func Prim(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
 func Kruskal(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
 	cost = setupFuncs(g, cost, nil).cost
 
-	edgeList := g.EdgeList()
+	edgeList := g.Edges()
 	edges := make([]concrete.WeightedEdge, 0, len(edgeList))
 	for _, edge := range edgeList {
 		edges = append(edges, concrete.WeightedEdge{Edge: edge, Cost: cost(edge)})
@@ -550,7 +548,7 @@ func Kruskal(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc)
 	sort.Sort(byWeight(edges))
 
 	ds := newDisjointSet()
-	for _, node := range g.NodeList() {
+	for _, node := range g.Nodes() {
 		ds.makeSet(node.ID())
 	}
 
@@ -573,7 +571,7 @@ func Kruskal(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc)
 //
 func Dominators(start graph.Node, g graph.Graph) map[int]Set {
 	allNodes := make(Set)
-	nlist := g.NodeList()
+	nlist := g.Nodes()
 	dominators := make(map[int]Set, len(nlist))
 	for _, node := range nlist {
 		allNodes.add(node)
@@ -627,7 +625,7 @@ func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
 	from := setupFuncs(g, nil, nil).from
 
 	allNodes := make(Set)
-	nlist := g.NodeList()
+	nlist := g.Nodes()
 	dominators := make(map[int]Set, len(nlist))
 	for _, node := range nlist {
 		allNodes.add(node)
@@ -674,7 +672,7 @@ func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
 // VertexOrdering returns the vertex ordering and the k-cores of
 // the undirected graph g.
 func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 
 	// The algorithm used here is essentially as described at
 	// http://en.wikipedia.org/w/index.php?title=Degeneracy_%28graph_theory%29&oldid=640308710
@@ -691,7 +689,7 @@ func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
 		neighbours = make(map[int][]graph.Node)
 	)
 	for _, n := range nodes {
-		adj := g.Neighbors(n)
+		adj := g.From(n)
 		neighbours[n.ID()] = adj
 		dv[n.ID()] = len(adj)
 		if len(adj) > maxDegree {
@@ -772,7 +770,7 @@ func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
 
 // BronKerbosch returns the set of maximal cliques of the undirected graph g.
 func BronKerbosch(g graph.Graph) [][]graph.Node {
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 
 	// The algorithm used here is essentially BronKerbosch3 as described at
 	// http://en.wikipedia.org/w/index.php?title=Bron%E2%80%93Kerbosch_algorithm&oldid=656805858
@@ -785,7 +783,7 @@ func BronKerbosch(g graph.Graph) [][]graph.Node {
 	var bk bronKerbosch
 	order, _ := VertexOrdering(g)
 	for _, v := range order {
-		neighbours := g.Neighbors(v)
+		neighbours := g.From(v)
 		nv := make(Set, len(neighbours))
 		for _, n := range neighbours {
 			nv.add(n)
@@ -814,7 +812,7 @@ func (bk *bronKerbosch) maximalCliquePivot(g graph.Graph, r []graph.Node, p, x S
 		if nu.has(v) {
 			continue
 		}
-		neighbours := g.Neighbors(v)
+		neighbours := g.From(v)
 		nv := make(Set, len(neighbours))
 		for _, n := range neighbours {
 			nv.add(n)
@@ -844,10 +842,10 @@ func (*bronKerbosch) choosePivotFrom(g graph.Graph, p, x Set) (neighbors []graph
 	// compile time option.
 	if !tomitaTanakaTakahashi {
 		for _, n := range p {
-			return g.Neighbors(n)
+			return g.From(n)
 		}
 		for _, n := range x {
-			return g.Neighbors(n)
+			return g.From(n)
 		}
 		panic("bronKerbosch: empty set")
 	}
@@ -859,7 +857,7 @@ func (*bronKerbosch) choosePivotFrom(g graph.Graph, p, x Set) (neighbors []graph
 	maxNeighbors := func(s Set) {
 	outer:
 		for _, u := range s {
-			nb := g.Neighbors(u)
+			nb := g.From(u)
 			c := len(nb)
 			if c <= max {
 				continue
@@ -888,7 +886,7 @@ func (*bronKerbosch) choosePivotFrom(g graph.Graph, p, x Set) (neighbors []graph
 
 // ConnectedComponents returns the connected components of the graph g. All
 // edges are treated as undirected.
-func ConnectedComponents(g graph.Graph) [][]graph.Node {
+func ConnectedComponents(g graph.UndirectedGraph) [][]graph.Node {
 	var (
 		w  traverse.DepthFirst
 		c  []graph.Node

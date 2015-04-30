@@ -171,9 +171,9 @@ func (g *TileGraph) CoordsToNode(row, col int) graph.Node {
 	return concrete.Node(id)
 }
 
-func (g *TileGraph) Neighbors(n graph.Node) []graph.Node {
+func (g *TileGraph) From(n graph.Node) []graph.Node {
 	id := n.ID()
-	if !g.NodeExists(n) {
+	if !g.Has(n) {
 		return nil
 	}
 
@@ -190,27 +190,30 @@ func (g *TileGraph) Neighbors(n graph.Node) []graph.Node {
 	return realNeighbors
 }
 
-func (g *TileGraph) EdgeBetween(n, neigh graph.Node) graph.Edge {
-	if !g.NodeExists(n) || !g.NodeExists(neigh) {
-		return nil
+func (g *TileGraph) HasEdge(n, neigh graph.Node) bool {
+	if !g.Has(n) || !g.Has(neigh) {
+		return false
 	}
-
 	r1, c1 := g.IDToCoords(n.ID())
 	r2, c2 := g.IDToCoords(neigh.ID())
-	if (c1 == c2 && (r2 == r1+1 || r2 == r1-1)) || (r1 == r2 && (c2 == c1+1 || c2 == c1-1)) {
+	return (c1 == c2 && (r2 == r1+1 || r2 == r1-1)) || (r1 == r2 && (c2 == c1+1 || c2 == c1-1))
+}
+
+func (g *TileGraph) EdgeBetween(n, neigh graph.Node) graph.Edge {
+	if g.HasEdge(n, neigh) {
 		return concrete.Edge{n, neigh}
 	}
 
 	return nil
 }
 
-func (g *TileGraph) NodeExists(n graph.Node) bool {
+func (g *TileGraph) Has(n graph.Node) bool {
 	id := n.ID()
 	return id >= 0 && id < len(g.tiles) && g.tiles[id] == true
 }
 
 func (g *TileGraph) Degree(n graph.Node) int {
-	return len(g.Neighbors(n)) * 2
+	return len(g.From(n)) * 2
 }
 
 func (g *TileGraph) EdgeList() []graph.Edge {
@@ -220,7 +223,7 @@ func (g *TileGraph) EdgeList() []graph.Edge {
 			continue
 		}
 
-		for _, succ := range g.Neighbors(concrete.Node(id)) {
+		for _, succ := range g.From(concrete.Node(id)) {
 			edges = append(edges, concrete.Edge{concrete.Node(id), succ})
 		}
 	}
@@ -228,7 +231,7 @@ func (g *TileGraph) EdgeList() []graph.Edge {
 	return edges
 }
 
-func (g *TileGraph) NodeList() []graph.Node {
+func (g *TileGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, 0)
 	for id, passable := range g.tiles {
 		if !passable {

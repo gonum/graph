@@ -11,7 +11,7 @@ type GraphNode struct {
 	roots     []*GraphNode
 }
 
-func (g *GraphNode) NodeExists(n graph.Node) bool {
+func (g *GraphNode) Has(n graph.Node) bool {
 	if n.ID() == g.id {
 		return true
 	}
@@ -22,7 +22,7 @@ func (g *GraphNode) NodeExists(n graph.Node) bool {
 			return true
 		}
 
-		if root.nodeExists(n, visited) {
+		if root.has(n, visited) {
 			return true
 		}
 	}
@@ -33,7 +33,7 @@ func (g *GraphNode) NodeExists(n graph.Node) bool {
 		}
 
 		if gn, ok := neigh.(*GraphNode); ok {
-			if gn.nodeExists(n, visited) {
+			if gn.has(n, visited) {
 				return true
 			}
 		}
@@ -42,7 +42,7 @@ func (g *GraphNode) NodeExists(n graph.Node) bool {
 	return false
 }
 
-func (g *GraphNode) nodeExists(n graph.Node, visited map[int]struct{}) bool {
+func (g *GraphNode) has(n graph.Node, visited map[int]struct{}) bool {
 	for _, root := range g.roots {
 		if _, ok := visited[root.ID()]; ok {
 			continue
@@ -53,7 +53,7 @@ func (g *GraphNode) nodeExists(n graph.Node, visited map[int]struct{}) bool {
 			return true
 		}
 
-		if root.nodeExists(n, visited) {
+		if root.has(n, visited) {
 			return true
 		}
 
@@ -70,7 +70,7 @@ func (g *GraphNode) nodeExists(n graph.Node, visited map[int]struct{}) bool {
 		}
 
 		if gn, ok := neigh.(*GraphNode); ok {
-			if gn.nodeExists(n, visited) {
+			if gn.has(n, visited) {
 				return true
 			}
 		}
@@ -80,7 +80,7 @@ func (g *GraphNode) nodeExists(n graph.Node, visited map[int]struct{}) bool {
 	return false
 }
 
-func (g *GraphNode) NodeList() []graph.Node {
+func (g *GraphNode) Nodes() []graph.Node {
 	toReturn := []graph.Node{g}
 	visited := map[int]struct{}{g.id: struct{}{}}
 
@@ -88,7 +88,7 @@ func (g *GraphNode) NodeList() []graph.Node {
 		toReturn = append(toReturn, root)
 		visited[root.ID()] = struct{}{}
 
-		toReturn = root.nodeList(toReturn, visited)
+		toReturn = root.nodes(toReturn, visited)
 	}
 
 	for _, neigh := range g.neighbors {
@@ -96,14 +96,14 @@ func (g *GraphNode) NodeList() []graph.Node {
 		visited[neigh.ID()] = struct{}{}
 
 		if gn, ok := neigh.(*GraphNode); ok {
-			toReturn = gn.nodeList(toReturn, visited)
+			toReturn = gn.nodes(toReturn, visited)
 		}
 	}
 
 	return toReturn
 }
 
-func (g *GraphNode) nodeList(list []graph.Node, visited map[int]struct{}) []graph.Node {
+func (g *GraphNode) nodes(list []graph.Node, visited map[int]struct{}) []graph.Node {
 	for _, root := range g.roots {
 		if _, ok := visited[root.ID()]; ok {
 			continue
@@ -111,7 +111,7 @@ func (g *GraphNode) nodeList(list []graph.Node, visited map[int]struct{}) []grap
 		visited[root.ID()] = struct{}{}
 		list = append(list, graph.Node(root))
 
-		list = root.nodeList(list, visited)
+		list = root.nodes(list, visited)
 	}
 
 	for _, neigh := range g.neighbors {
@@ -121,14 +121,14 @@ func (g *GraphNode) nodeList(list []graph.Node, visited map[int]struct{}) []grap
 
 		list = append(list, neigh)
 		if gn, ok := neigh.(*GraphNode); ok {
-			list = gn.nodeList(list, visited)
+			list = gn.nodes(list, visited)
 		}
 	}
 
 	return list
 }
 
-func (g *GraphNode) Neighbors(n graph.Node) []graph.Node {
+func (g *GraphNode) From(n graph.Node) []graph.Node {
 	if n.ID() == g.ID() {
 		return g.neighbors
 	}
@@ -185,6 +185,37 @@ func (g *GraphNode) findNeighbors(n graph.Node, visited map[int]struct{}) []grap
 	}
 
 	return nil
+}
+
+func (g *GraphNode) HasEdge(n, neighbor graph.Node) bool {
+	if n.ID() == g.id || neighbor.ID() == g.id {
+		for _, neigh := range g.neighbors {
+			if neigh.ID() == n.ID() || neigh.ID() == neighbor.ID() {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	visited := map[int]struct{}{g.id: struct{}{}}
+	for _, root := range g.roots {
+		visited[root.ID()] = struct{}{}
+		if root.edgeBetween(n, neighbor, visited) != nil {
+			return true
+		}
+	}
+
+	for _, neigh := range g.neighbors {
+		visited[neigh.ID()] = struct{}{}
+		if gn, ok := neigh.(*GraphNode); ok {
+			if gn.edgeBetween(n, neighbor, visited) != nil {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (g *GraphNode) EdgeBetween(n, neighbor graph.Node) graph.Edge {

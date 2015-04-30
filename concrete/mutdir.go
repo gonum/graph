@@ -73,11 +73,11 @@ func (g *DirectedGraph) AddNode(n graph.Node) {
 
 func (g *DirectedGraph) AddDirectedEdge(e graph.Edge, cost float64) {
 	head, tail := e.Head(), e.Tail()
-	if !g.NodeExists(head) {
+	if !g.Has(head) {
 		g.AddNode(head)
 	}
 
-	if !g.NodeExists(tail) {
+	if !g.Has(tail) {
 		g.AddNode(tail)
 	}
 
@@ -140,7 +140,17 @@ func (g *DirectedGraph) From(n graph.Node) []graph.Node {
 	return successors
 }
 
-func (g *DirectedGraph) EdgeTo(n, succ graph.Node) graph.Edge {
+func (g *DirectedGraph) HasEdge(n, succ graph.Node) bool {
+	if _, ok := g.nodeMap[n.ID()]; !ok {
+		return false
+	} else if _, ok := g.nodeMap[succ.ID()]; !ok {
+		return false
+	}
+	_, ok := g.successors[n.ID()][succ.ID()]
+	return ok
+}
+
+func (g *DirectedGraph) EdgeFromTo(n, succ graph.Node) graph.Edge {
 	if _, ok := g.nodeMap[n.ID()]; !ok {
 		return nil
 	} else if _, ok := g.nodeMap[succ.ID()]; !ok {
@@ -169,39 +179,13 @@ func (g *DirectedGraph) To(n graph.Node) []graph.Node {
 	return predecessors
 }
 
-func (g *DirectedGraph) Neighbors(n graph.Node) []graph.Node {
-	if _, ok := g.successors[n.ID()]; !ok {
-		return nil
-	}
-
-	neighbors := make([]graph.Node, len(g.predecessors[n.ID()])+len(g.successors[n.ID()]))
-	i := 0
-	for succ := range g.successors[n.ID()] {
-		neighbors[i] = g.nodeMap[succ]
-		i++
-	}
-
-	for pred := range g.predecessors[n.ID()] {
-		// We should only add the predecessor if it wasn't already added from successors
-		if _, ok := g.successors[n.ID()][pred]; !ok {
-			neighbors[i] = g.nodeMap[pred]
-			i++
-		}
-	}
-
-	// Otherwise we overcount for self loops
-	neighbors = neighbors[:i]
-
-	return neighbors
-}
-
 func (g *DirectedGraph) EdgeBetween(n, neigh graph.Node) graph.Edge {
-	e := g.EdgeTo(n, neigh)
+	e := g.EdgeFromTo(n, neigh)
 	if e != nil {
 		return e
 	}
 
-	e = g.EdgeTo(neigh, n)
+	e = g.EdgeFromTo(neigh, n)
 	if e != nil {
 		return e
 	}
@@ -209,7 +193,7 @@ func (g *DirectedGraph) EdgeBetween(n, neigh graph.Node) graph.Edge {
 	return nil
 }
 
-func (g *DirectedGraph) NodeExists(n graph.Node) bool {
+func (g *DirectedGraph) Has(n graph.Node) bool {
 	_, ok := g.nodeMap[n.ID()]
 
 	return ok
@@ -223,7 +207,7 @@ func (g *DirectedGraph) Degree(n graph.Node) int {
 	return len(g.successors[n.ID()]) + len(g.predecessors[n.ID()])
 }
 
-func (g *DirectedGraph) NodeList() []graph.Node {
+func (g *DirectedGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, len(g.successors))
 	i := 0
 	for _, n := range g.nodeMap {

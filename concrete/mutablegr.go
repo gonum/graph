@@ -100,11 +100,11 @@ func (g *Graph) AddNode(n graph.Node) {
 
 func (g *Graph) AddUndirectedEdge(e graph.Edge, cost float64) {
 	head, tail := e.Head(), e.Tail()
-	if !g.NodeExists(head) {
+	if !g.Has(head) {
 		g.AddNode(head)
 	}
 
-	if !g.NodeExists(tail) {
+	if !g.Has(tail) {
 		g.AddNode(tail)
 	}
 
@@ -148,8 +148,8 @@ func (g *Graph) EmptyGraph() {
 
 /* Graph implementation */
 
-func (g *Graph) Neighbors(n graph.Node) []graph.Node {
-	if !g.NodeExists(n) {
+func (g *Graph) From(n graph.Node) []graph.Node {
+	if !g.Has(n) {
 		return nil
 	}
 
@@ -163,23 +163,28 @@ func (g *Graph) Neighbors(n graph.Node) []graph.Node {
 	return neighbors
 }
 
+func (g *Graph) HasEdge(n, neigh graph.Node) bool {
+	_, ok := g.neighbors[n.ID()][neigh.ID()]
+	return ok
+}
+
 func (g *Graph) EdgeBetween(n, neigh graph.Node) graph.Edge {
 	// Don't need to check if neigh exists because
 	// it's implicit in the neighbors access.
-	if !g.NodeExists(n) {
+	if !g.Has(n) {
 		return nil
 	}
 
 	return g.neighbors[n.ID()][neigh.ID()]
 }
 
-func (g *Graph) NodeExists(n graph.Node) bool {
+func (g *Graph) Has(n graph.Node) bool {
 	_, ok := g.nodeMap[n.ID()]
 
 	return ok
 }
 
-func (g *Graph) NodeList() []graph.Node {
+func (g *Graph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, len(g.nodeMap))
 	i := 0
 	for _, n := range g.nodeMap {
@@ -199,7 +204,7 @@ func (g *Graph) Cost(e graph.Edge) float64 {
 	return inf
 }
 
-func (g *Graph) EdgeList() []graph.Edge {
+func (g *Graph) Edges() []graph.Edge {
 	m := make(map[WeightedEdge]struct{})
 	toReturn := make([]graph.Edge, 0)
 

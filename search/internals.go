@@ -15,7 +15,7 @@ import (
 var inf = math.Inf(1)
 
 type searchFuncs struct {
-	from, to, neighbors                    func(graph.Node) []graph.Node
+	from, to                               func(graph.Node) []graph.Node
 	isSuccessor, isPredecessor, isNeighbor func(graph.Node, graph.Node) bool
 	cost                                   graph.CostFunc
 	heuristicCost                          graph.HeuristicCostFunc
@@ -24,49 +24,65 @@ type searchFuncs struct {
 
 func genIsSuccessor(g graph.DirectedGraph) func(graph.Node, graph.Node) bool {
 	return func(node, succ graph.Node) bool {
-		return g.EdgeTo(node, succ) != nil
+		return g.EdgeFromTo(node, succ) != nil
 	}
 }
 
 func genIsPredecessor(g graph.DirectedGraph) func(graph.Node, graph.Node) bool {
 	return func(node, succ graph.Node) bool {
-		return g.EdgeTo(succ, node) != nil
+		return g.EdgeFromTo(succ, node) != nil
 	}
 }
 
-func genIsNeighbor(g graph.Graph) func(graph.Node, graph.Node) bool {
-	return func(node, succ graph.Node) bool {
-		return g.EdgeBetween(succ, node) != nil
+func genEdgeFor(g graph.Graph) func(u, v graph.Node) graph.Edge {
+	return func(u, v graph.Node) graph.Edge {
+		if g.HasEdge(u, v) {
+			return edge{u, v}
+		}
+		return nil
 	}
 }
+
+type edge struct {
+	u, v graph.Node
+}
+
+func (e edge) Head() graph.Node { return e.u }
+func (e edge) Tail() graph.Node { return e.v }
 
 // Sets up the cost functions and successor functions so I don't have to do a type switch every
 // time. This almost always does more work than is necessary, but since it's only executed once
 // per function, and graph functions are rather costly, the "extra work" should be negligible.
 func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.HeuristicCostFunc) searchFuncs {
-
-	sf := searchFuncs{}
+	var sf searchFuncs
 
 	switch g := g.(type) {
 	case graph.DirectedGraph:
 		sf.from = g.From
 		sf.to = g.To
-		sf.neighbors = g.Neighbors
 		sf.isSuccessor = genIsSuccessor(g)
 		sf.isPredecessor = genIsPredecessor(g)
-		sf.isNeighbor = genIsNeighbor(g)
-		sf.edgeBetween = g.EdgeBetween
-		sf.edgeTo = g.EdgeTo
-	default:
-		sf.from = g.Neighbors
-		sf.to = g.Neighbors
-		sf.neighbors = g.Neighbors
-		isNeighbor := genIsNeighbor(g)
+		sf.isNeighbor = g.HasEdge
+		sf.edgeBetween = g.EdgeFromTo
+		sf.edgeTo = g.EdgeFromTo
+	case graph.UndirectedGraph:
+		sf.from = g.From
+		sf.to = g.From
+		isNeighbor := g.HasEdge
 		sf.isSuccessor = isNeighbor
 		sf.isPredecessor = isNeighbor
 		sf.isNeighbor = isNeighbor
 		sf.edgeBetween = g.EdgeBetween
 		sf.edgeTo = g.EdgeBetween
+	default:
+		sf.from = g.From
+		sf.to = g.From
+		isNeighbor := g.HasEdge
+		sf.isSuccessor = isNeighbor
+		sf.isPredecessor = isNeighbor
+		sf.isNeighbor = isNeighbor
+		sf.edgeBetween = genEdgeFor(g)
+		sf.edgeTo = genEdgeFor(g)
 	}
 
 	if heuristicCost != nil {
