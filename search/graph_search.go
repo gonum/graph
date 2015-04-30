@@ -241,10 +241,10 @@ func DepthFirstSearch(start, goal graph.Node, g SourceSearchGraph) []graph.Node 
 // An undirected graph should end up with as many SCCs as there are "islands" (or subgraphs) of
 // connections, meaning having more than one strongly connected component implies that your graph
 // is not fully connected.
-func TarjanSCC(g graph.Graph) [][]graph.Node {
+func TarjanSCC(g FiniteSearchGraph) [][]graph.Node {
 	nodes := g.NodeList()
 	t := tarjan{
-		succ: setupFuncs(g, nil, nil).successors,
+		g: g,
 
 		indexTable: make(map[int]int, len(nodes)),
 		lowLink:    make(map[int]int, len(nodes)),
@@ -264,7 +264,7 @@ func TarjanSCC(g graph.Graph) [][]graph.Node {
 // http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm?oldid=642744644
 //
 type tarjan struct {
-	succ func(graph.Node) []graph.Node
+	g SourceSearchGraph
 
 	index      int
 	indexTable map[int]int
@@ -289,7 +289,8 @@ func (t *tarjan) strongconnect(v graph.Node) {
 	t.onStack.add(vID)
 
 	// Consider successors of v.
-	for _, w := range t.succ(v) {
+	for _, edge := range g.Out(v) {
+		w := edge.Tail()
 		wID := w.ID()
 		if t.indexTable[wID] == 0 {
 			// Successor w has not yet been visited; recur on it.
