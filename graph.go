@@ -38,16 +38,20 @@ type In interface {
 }
 
 // InOut means that a graph can generate predecessor and
-// successors
+// successors, the InOut function has no guarantees about which is head
+// or tail.
 type InOut interface {
 	In
 	Out
+	InOut(n Node) []DirectedEdge
+	Degree(n Node) uint
 }
 
 // EdgeProvider is a generic method that provides undirected edges coming
-// to/from a node. For directed cases, take the union of the In/Out interfaces.
+// to/from a node. For directed cases, use the InOut interface.
 type EdgeProvider interface {
 	Edges(n Node) []UndirectedEdge
+	Degree(n Node) uint
 }
 
 type FiniteGraph interface {
