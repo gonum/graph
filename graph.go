@@ -40,10 +40,16 @@ type In interface {
 // InOut means that a graph can generate predecessor and
 // successors, the InOut function has no guarantees about which is head
 // or tail.
+//
+// Note that this interface technically embeds EdgeProvider, but doesn't
+// explicitly do so for semantic reasons.
 type InOut interface {
 	In
 	Out
 	InOut(n Node) []DirectedEdge
+	// Provides the UNION of edges from InOut, but returns the edges
+	// in unspecified order.
+	Edges(n Node) []UndirectedEdge
 	Degree(n Node) uint
 }
 
