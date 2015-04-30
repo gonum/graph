@@ -47,9 +47,14 @@ type InOut interface {
 	In
 	Out
 	InOut(n Node) []DirectedEdge
-	// Provides the UNION of edges from InOut, but returns the edges
-	// in unspecified order.
-	Edges(n Node) []UndirectedEdge
+	Degree(n Node) uint
+}
+
+// Provides the adjacent nodes to a given node.
+// This is for convenience, and could be derived from either
+// InOut or EdgeProvider
+type NeighborProvider interface {
+	Neighbors(n Node) []Node
 	Degree(n Node) uint
 }
 
@@ -152,8 +157,16 @@ type FiniteDirectedGraph interface {
 }
 
 // FiniteUndirectedGraph has a finite number of nodes
-// for which it can provide its neighbors.
+// for which it can provide its udirected incoming and outgoing
+// edges.
 type FiniteUndirectedGraph interface {
 	EdgeProvider
+	FiniteGraph
+}
+
+// FiniteNeighborProvider has a finite number of nodes
+// for which it can provide the node neighbors for.
+type FiniteNeighborProvider interface {
+	NeighborProvider
 	FiniteGraph
 }
