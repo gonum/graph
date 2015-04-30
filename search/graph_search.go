@@ -381,9 +381,9 @@ func Dominators(start graph.Node, g graph.FiniteBackwardGraph) map[int]Set {
 			if len(edges) == 0 {
 				continue
 			}
-			tmp := make(Set).copy(dominators[edges[0].Tail().ID()])
+			tmp := make(Set).copy(dominators[edges[0].Head().ID()])
 			for _, edge := range edges[1:] {
-				tmp.intersect(tmp, dominators[pred.Tail().ID()])
+				tmp.intersect(tmp, dominators[pred.Head().ID()])
 			}
 
 			dom := make(Set)
