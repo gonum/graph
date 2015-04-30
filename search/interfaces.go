@@ -10,10 +10,20 @@ type SourceSearchGraph interface {
 	graph.Out
 }
 
+type FiniteSearchGraph interface {
+	graph.FiniteGraph
+	SourceSearchGraph
+}
+
 // CostSearchGraph is the minimal set of methods needed to perform
 // a weighted graph search fanning out from a single node.
 type CostSearchGraph interface {
 	SourceSearchGraph
+	graph.DirectedCostGraph
+}
+
+type FiniteCostSearchGraph interface {
+	FiniteSearchGraph
 	graph.DirectedCostGraph
 }
 

@@ -43,6 +43,10 @@ type EdgeProvider interface {
 	Edges(n Node) []UndirectedEdge
 }
 
+type FiniteGraph interface {
+	NodeList() []Node
+}
+
 // DirectedCostGraph allows a graph to dictate the cost or weight
 // of an arbitrary edge.
 type DirectedCostGraph interface {

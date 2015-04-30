@@ -150,10 +150,7 @@ func Dijkstra(source graph.Node, g CostSearchGraph) (paths map[int][]graph.Node,
 // Like Dijkstra's, along with the costs this implementation will also construct all the paths for
 // you. In addition, it has a third return value which will be true if the algorithm was aborted
 // due to the presence of a negative edge weight cycle.
-func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64, err error) {
-	sf := setupFuncs(g, cost, nil)
-	successors, cost, edgeTo := sf.successors, sf.cost, sf.edgeTo
-
+func BellmanFord(source graph.Node, g FiniteCostSearchGraph) (paths map[int][]graph.Node, costs map[int]float64, err error) {
 	predecessor := make(map[int]graph.Node)
 	costs = make(map[int]float64)
 	nodeIDMap := make(map[int]graph.Node)
@@ -164,9 +161,9 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	for i := 1; i < len(nodes)-1; i++ {
 		for _, node := range nodes {
 			nodeIDMap[node.ID()] = node
-			succs := successors(node)
-			for _, succ := range succs {
-				weight := cost(edgeTo(node, succ))
+			for _, edge := range g.Out(node) {
+				succ := edge.Tail()
+				weight := cost(edge)
 				nodeIDMap[succ.ID()] = succ
 
 				if dist := costs[node.ID()] + weight; dist < costs[succ.ID()] {
@@ -179,8 +176,9 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	}
 
 	for _, node := range nodes {
-		for _, succ := range successors(node) {
-			weight := cost(edgeTo(node, succ))
+		for _, edge := range g.Out(node) {
+			succ := edge.Tail()
+			weight := cost(edge)
 			if costs[node.ID()]+weight < costs[succ.ID()] {
 				return nil, nil, errors.New("Negative edge cycle detected")
 			}
