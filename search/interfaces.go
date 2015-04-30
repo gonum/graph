@@ -37,7 +37,7 @@ type HeuristicSearchGraph interface {
 // UnitNullGraph is a convenience wrapper for a graph that implements
 // a unit cost function and the null heuristic.
 type UnitNullGraph struct {
-	graph.Graph
+	SourceSearchGraph
 }
 
 func (g *UnitNullGraph) Cost(_ graph.Edge) float64 {
