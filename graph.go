@@ -43,10 +43,16 @@ type EdgeProvider interface {
 	Edges(n Node) []UndirectedEdge
 }
 
-// CostGraph allows a graph to dictate the cost or weight
+// DirectedCostGraph allows a graph to dictate the cost or weight
 // of an arbitrary edge.
-type CostGraph interface {
-	Cost(e Edge) float64
+type DirectedCostGraph interface {
+	Cost(e DirectedEdge) float64
+}
+
+// UndirectedCostGraph allows a graph to dictate the cost or weight
+// of an arbitrary edge.
+type UndirectedCostGraph interface {
+	Cost(e UndirectedEdge) float64
 }
 
 // HeuristicCostGraph means a graph can estimate
@@ -54,4 +60,3 @@ type CostGraph interface {
 type HeuristicCostGraph interface {
 	HeuristicCost(n1, n2 Node) float64
 }
-
