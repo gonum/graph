@@ -454,7 +454,7 @@ func PostDominators(end graph.Node, g graph.FiniteForwardGraph) map[int]Set {
 
 // VertexOrdering returns the vertex ordering and the k-cores of
 // the undirected graph g.
-func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
+func VertexOrdering(g graph.FiniteNeighborProvider) (order []graph.Node, cores [][]graph.Node) {
 	nodes := g.NodeList()
 
 	// The algorithm used here is essentially as described at
@@ -472,11 +472,12 @@ func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
 		neighbours = make(map[int][]graph.Node)
 	)
 	for _, n := range nodes {
-		adj := g.Neighbors(n)
+		var adj []graph.Node = nil
+		g.Edges(n)
 		neighbours[n.ID()] = adj
-		dv[n.ID()] = len(adj)
-		if len(adj) > maxDegree {
-			maxDegree = len(adj)
+		dv[n.ID()] = g.Degree(n)
+		if dv[n.ID()] > maxDegree {
+			maxDegree = dv[n.ID()]
 		}
 	}
 
@@ -552,7 +553,7 @@ func VertexOrdering(g graph.Graph) (order []graph.Node, cores [][]graph.Node) {
 }
 
 // BronKerbosch returns the set of maximal cliques of the undirected graph g.
-func BronKerbosch(g graph.Graph) [][]graph.Node {
+func BronKerbosch(g graph.FiniteNeighborProvider) [][]graph.Node {
 	nodes := g.NodeList()
 
 	// The algorithm used here is essentially BronKerbosch3 as described at
@@ -580,7 +581,7 @@ func BronKerbosch(g graph.Graph) [][]graph.Node {
 
 type bronKerbosch [][]graph.Node
 
-func (bk *bronKerbosch) maximalCliquePivot(g graph.Graph, r []graph.Node, p, x Set) {
+func (bk *bronKerbosch) maximalCliquePivot(g graph.FiniteNeighborProvider, r []graph.Node, p, x Set) {
 	if len(p) == 0 && len(x) == 0 {
 		*bk = append(*bk, r)
 		return
@@ -596,7 +597,7 @@ func (bk *bronKerbosch) maximalCliquePivot(g graph.Graph, r []graph.Node, p, x S
 			continue
 		}
 		neighbours := g.Neighbors(v)
-		nv := make(Set, len(neighbours))
+		nv := make(Set, g.Degree(v))
 		for _, n := range neighbours {
 			nv.add(n)
 		}
@@ -619,7 +620,7 @@ func (bk *bronKerbosch) maximalCliquePivot(g graph.Graph, r []graph.Node, p, x S
 	}
 }
 
-func (*bronKerbosch) choosePivotFrom(g graph.Graph, p, x Set) (neighbors []graph.Node) {
+func (*bronKerbosch) choosePivotFrom(g graph.FiniteNeighborProvider, p, x Set) (neighbors []graph.Node) {
 	// TODO(kortschak): Investigate the impact of pivot choice that maximises
 	// |p ⋂ neighbours(u)| as a function of input size. Until then, leave as
 	// compile time option.
