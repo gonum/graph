@@ -354,16 +354,13 @@ func IsPath(path []graph.Node, g graph.NodeNeighborVerifier) bool {
 //
 // This returns all possible dominators for all nodes, it does not prune for strict dominators,
 // immediate dominators etc.
-//
-func Dominators(start graph.Node, g graph.Graph) map[int]Set {
+func Dominators(start graph.Node, g graph.FiniteBackwardGraph) map[int]Set {
 	allNodes := make(Set)
 	nlist := g.NodeList()
 	dominators := make(map[int]Set, len(nlist))
 	for _, node := range nlist {
 		allNodes.add(node)
 	}
-
-	predecessors := setupFuncs(g, nil, nil).predecessors
 
 	for _, node := range nlist {
 		dominators[node.ID()] = make(Set)
@@ -380,13 +377,13 @@ func Dominators(start graph.Node, g graph.Graph) map[int]Set {
 			if node.ID() == start.ID() {
 				continue
 			}
-			preds := predecessors(node)
-			if len(preds) == 0 {
+			edges := g.In(node)
+			if len(edges) == 0 {
 				continue
 			}
-			tmp := make(Set).copy(dominators[preds[0].ID()])
-			for _, pred := range preds[1:] {
-				tmp.intersect(tmp, dominators[pred.ID()])
+			tmp := make(Set).copy(dominators[edges[0].Tail().ID()])
+			for _, edge := range edges[1:] {
+				tmp.intersect(tmp, dominators[pred.Tail().ID()])
 			}
 
 			dom := make(Set)

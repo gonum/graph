@@ -37,6 +37,13 @@ type In interface {
 	In(n Node) []DirectedEdge
 }
 
+// InOut means that a graph can generate predecessor and
+// successors
+type InOut interface {
+	In
+	Out
+}
+
 // EdgeProvider is a generic method that provides undirected edges coming
 // to/from a node. For directed cases, take the union of the In/Out interfaces.
 type EdgeProvider interface {
@@ -111,4 +118,32 @@ type Verifier interface {
 	NodeVerifier
 	NeighborVerifier
 	SuccessorVerifier
+}
+
+// FiniteForwardGraph has a finite number of nodes
+// for which it can provide successors.
+type FiniteForwardGraph interface {
+	Out
+	FiniteGraph
+}
+
+// FiniteBackwardGraph has a finite number of nodes
+// for which it can provide predecessors.
+type FiniteBackwardGraph interface {
+	In
+	FiniteGraph
+}
+
+// FiniteDirectedGraph has a finite number of nodes
+// for which it can provide successors or predecessors.
+type FiniteDirectedGraph interface {
+	InOut
+	FiniteGraph
+}
+
+// FiniteUndirectedGraph has a finite number of nodes
+// for which it can provide its neighbors.
+type FiniteUndirectedGraph interface {
+	EdgeProvider
+	FiniteGraph
 }
