@@ -27,7 +27,7 @@ func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.N
 	var neighbors func(graph.Node) []graph.Node
 	switch g := g.(type) {
 	case graph.DirectedGraph:
-		neighbors = g.Successors
+		neighbors = g.From
 	default:
 		neighbors = g.Neighbors
 	}
@@ -130,7 +130,7 @@ func (d *DepthFirst) Walk(g graph.Graph, from graph.Node, until func(graph.Node)
 	var neighbors func(graph.Node) []graph.Node
 	switch g := g.(type) {
 	case graph.DirectedGraph:
-		neighbors = g.Successors
+		neighbors = g.From
 	default:
 		neighbors = g.Neighbors
 	}

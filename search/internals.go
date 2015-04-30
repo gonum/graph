@@ -15,7 +15,7 @@ import (
 var inf = math.Inf(1)
 
 type searchFuncs struct {
-	successors, predecessors, neighbors    func(graph.Node) []graph.Node
+	from, to, neighbors                    func(graph.Node) []graph.Node
 	isSuccessor, isPredecessor, isNeighbor func(graph.Node, graph.Node) bool
 	cost                                   graph.CostFunc
 	heuristicCost                          graph.HeuristicCostFunc
@@ -49,8 +49,8 @@ func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.Heuristi
 
 	switch g := g.(type) {
 	case graph.DirectedGraph:
-		sf.successors = g.Successors
-		sf.predecessors = g.Predecessors
+		sf.from = g.From
+		sf.to = g.To
 		sf.neighbors = g.Neighbors
 		sf.isSuccessor = genIsSuccessor(g)
 		sf.isPredecessor = genIsPredecessor(g)
@@ -58,8 +58,8 @@ func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.Heuristi
 		sf.edgeBetween = g.EdgeBetween
 		sf.edgeTo = g.EdgeTo
 	default:
-		sf.successors = g.Neighbors
-		sf.predecessors = g.Neighbors
+		sf.from = g.Neighbors
+		sf.to = g.Neighbors
 		sf.neighbors = g.Neighbors
 		isNeighbor := genIsNeighbor(g)
 		sf.isSuccessor = isNeighbor

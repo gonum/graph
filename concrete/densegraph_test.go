@@ -70,12 +70,12 @@ func TestDenseAddRemove(t *testing.T) {
 		t.Errorf("Couldn't add neighbor")
 	}
 
-	if neighbors := dg.Successors(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
+	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
 		dg.EdgeTo(concrete.Node(0), concrete.Node(2)) == nil {
 		t.Errorf("Adding edge didn't create successor")
 	}
 
-	if neighbors := dg.Predecessors(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
+	if neighbors := dg.To(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
 		dg.EdgeTo(concrete.Node(2), concrete.Node(0)) == nil {
 		t.Errorf("Adding undirected edge didn't create predecessor")
 	}
@@ -85,12 +85,12 @@ func TestDenseAddRemove(t *testing.T) {
 		t.Errorf("Adding an undirected neighbor didn't add it reciprocally")
 	}
 
-	if neighbors := dg.Successors(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
+	if neighbors := dg.From(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
 		dg.EdgeTo(concrete.Node(2), concrete.Node(0)) == nil {
 		t.Errorf("Adding undirected edge didn't create proper successor")
 	}
 
-	if neighbors := dg.Predecessors(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
+	if neighbors := dg.To(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
 		dg.EdgeTo(concrete.Node(2), concrete.Node(0)) == nil {
 		t.Errorf("Adding edge didn't create proper predecessor")
 	}
@@ -102,11 +102,11 @@ func TestDenseAddRemove(t *testing.T) {
 		t.Errorf("Removing a directed edge changed result of neighbors when neighbors is undirected; neighbors: %v", neighbors)
 	}
 
-	if neighbors := dg.Successors(concrete.Node(0)); len(neighbors) != 0 || dg.EdgeTo(concrete.Node(0), concrete.Node(2)) != nil {
+	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 0 || dg.EdgeTo(concrete.Node(0), concrete.Node(2)) != nil {
 		t.Errorf("Removing edge didn't properly remove successor")
 	}
 
-	if neighbors := dg.Predecessors(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
+	if neighbors := dg.To(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
 		dg.EdgeTo(concrete.Node(2), concrete.Node(0)) == nil {
 		t.Errorf("Removing directed edge improperly removed predecessor")
 	}
@@ -116,12 +116,12 @@ func TestDenseAddRemove(t *testing.T) {
 		t.Errorf("Removing a directed edge removed reciprocal edge, neighbors: %v", neighbors)
 	}
 
-	if neighbors := dg.Successors(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
+	if neighbors := dg.From(concrete.Node(2)); len(neighbors) != 1 || neighbors[0].ID() != 0 ||
 		dg.EdgeTo(concrete.Node(2), concrete.Node(0)) == nil {
 		t.Errorf("Removing edge improperly removed successor")
 	}
 
-	if neighbors := dg.Predecessors(concrete.Node(2)); len(neighbors) != 0 || dg.EdgeTo(concrete.Node(0), concrete.Node(2)) != nil {
+	if neighbors := dg.To(concrete.Node(2)); len(neighbors) != 0 || dg.EdgeTo(concrete.Node(0), concrete.Node(2)) != nil {
 		t.Errorf("Removing directed edge wrongly kept predecessor")
 	}
 

@@ -15,17 +15,23 @@ import (
 // FloydWarshall returns a shortest-path tree for the graph g or false indicating
 // that a negative cycle exists in the graph. If weight is nil and the graph does not
 // implement graph.Coster, UniformCost is used.
-func FloydWarshall(g graph.Graph, weight graph.CostFunc) (paths ShortestPaths, ok bool) {
+func FloydWarshall(g graph.Graph, weight graph.WeightFunc) (paths ShortestPaths, ok bool) {
 	var (
-		from   = g.Neighbors
+		from   = g.From
 		edgeTo func(graph.Node, graph.Node) graph.Edge
 	)
 	switch g := g.(type) {
-	case graph.DirectedGraph:
-		from = g.Successors
-		edgeTo = g.EdgeTo
-	default:
+	case graph.Directed:
+		edgeTo = g.EdgeFromTo
+	case graph.Undirected:
 		edgeTo = g.EdgeBetween
+	default:
+		edgeTo = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
 	}
 	if weight == nil {
 		if g, ok := g.(graph.Coster); ok {

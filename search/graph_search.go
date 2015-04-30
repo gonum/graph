@@ -45,7 +45,7 @@ import (
 // function that returns a uniform positive value.)
 func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristicCost graph.HeuristicCostFunc) (path []graph.Node, pathCost float64, nodesExpanded int) {
 	sf := setupFuncs(g, cost, heuristicCost)
-	successors, cost, heuristicCost, edgeTo := sf.successors, sf.cost, sf.heuristicCost, sf.edgeTo
+	from, cost, heuristicCost, edgeTo := sf.from, sf.cost, sf.heuristicCost, sf.edgeTo
 
 	closedSet := make(map[int]internalNode)
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -65,7 +65,7 @@ func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristic
 
 		closedSet[curr.ID()] = curr
 
-		for _, neighbor := range successors(curr.Node) {
+		for _, neighbor := range from(curr.Node) {
 			if _, ok := closedSet[neighbor.ID()]; ok {
 				continue
 			}
@@ -110,7 +110,7 @@ func BreadthFirstSearch(start, goal graph.Node, g graph.Graph) ([]graph.Node, in
 func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64) {
 
 	sf := setupFuncs(g, cost, nil)
-	successors, cost, edgeTo := sf.successors, sf.cost, sf.edgeTo
+	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
 
 	nodes := g.NodeList()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -127,7 +127,7 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 
 		nodeIDMap[node.ID()] = node
 
-		for _, neighbor := range successors(node) {
+		for _, neighbor := range from(node) {
 			tmpCost := costs[node.ID()] + cost(edgeTo(node, neighbor))
 			if cost, ok := costs[neighbor.ID()]; !ok {
 				costs[neighbor.ID()] = tmpCost
@@ -164,7 +164,7 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 // due to the presence of a negative edge weight cycle.
 func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64, err error) {
 	sf := setupFuncs(g, cost, nil)
-	successors, cost, edgeTo := sf.successors, sf.cost, sf.edgeTo
+	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
 
 	predecessor := make(map[int]graph.Node)
 	costs = make(map[int]float64)
@@ -176,7 +176,7 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	for i := 1; i < len(nodes)-1; i++ {
 		for _, node := range nodes {
 			nodeIDMap[node.ID()] = node
-			succs := successors(node)
+			succs := from(node)
 			for _, succ := range succs {
 				weight := cost(edgeTo(node, succ))
 				nodeIDMap[succ.ID()] = succ
@@ -191,7 +191,7 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	}
 
 	for _, node := range nodes {
-		for _, succ := range successors(node) {
+		for _, succ := range from(node) {
 			weight := cost(edgeTo(node, succ))
 			if costs[node.ID()]+weight < costs[succ.ID()] {
 				return nil, nil, errors.New("Negative edge cycle detected")
@@ -225,12 +225,12 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 // thus causing it (and this algorithm) to abort (if aborted is true, both maps will be nil).
 func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]graph.Node, nodeCosts map[int]map[int]float64, err error) {
 	sf := setupFuncs(g, cost, nil)
-	successors, cost, edgeTo := sf.successors, sf.cost, sf.edgeTo
+	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
 
 	/* Copy graph into a mutable one since it has to be altered for this algorithm */
 	dummyGraph := concrete.NewDirectedGraph()
 	for _, node := range g.NodeList() {
-		neighbors := successors(node)
+		neighbors := from(node)
 		dummyGraph.NodeExists(node)
 		dummyGraph.AddNode(node)
 		for _, neighbor := range neighbors {
@@ -263,7 +263,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 
 	/* Step 3: reweight the graph and remove the dummy node */
 	for _, node := range g.NodeList() {
-		for _, succ := range successors(node) {
+		for _, succ := range from(node) {
 			e := edgeTo(node, succ)
 			dummyGraph.AddDirectedEdge(e, cost(e)+costs[node.ID()]-costs[succ.ID()])
 		}
@@ -287,7 +287,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 // (provided you don't find a way to implement a Graph with an infinite depth.)
 func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
 	sf := setupFuncs(g, nil, nil)
-	successors := sf.successors
+	from := sf.from
 
 	closedSet := make(internal.IntSet)
 	predecessor := make(map[int]graph.Node)
@@ -306,7 +306,7 @@ func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
 
 		closedSet.Add(curr.ID())
 
-		for _, neighbor := range successors(curr) {
+		for _, neighbor := range from(curr) {
 			if closedSet.Has(neighbor.ID()) {
 				continue
 			}
@@ -359,7 +359,7 @@ func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) 
 	cost := setupFuncs(src, nil, nil).cost
 
 	for _, node := range src.NodeList() {
-		succs := src.Successors(node)
+		succs := src.From(node)
 		dst.AddNode(node)
 		for _, succ := range succs {
 			edge := src.EdgeTo(node, succ)
@@ -383,7 +383,7 @@ func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) 
 func TarjanSCC(g graph.DirectedGraph) [][]graph.Node {
 	nodes := g.NodeList()
 	t := tarjan{
-		succ: g.Successors,
+		succ: g.From,
 
 		indexTable: make(map[int]int, len(nodes)),
 		lowLink:    make(map[int]int, len(nodes)),
@@ -579,7 +579,7 @@ func Dominators(start graph.Node, g graph.Graph) map[int]Set {
 		allNodes.add(node)
 	}
 
-	predecessors := setupFuncs(g, nil, nil).predecessors
+	to := setupFuncs(g, nil, nil).to
 
 	for _, node := range nlist {
 		dominators[node.ID()] = make(Set)
@@ -596,7 +596,7 @@ func Dominators(start graph.Node, g graph.Graph) map[int]Set {
 			if node.ID() == start.ID() {
 				continue
 			}
-			preds := predecessors(node)
+			preds := to(node)
 			if len(preds) == 0 {
 				continue
 			}
@@ -624,7 +624,7 @@ func Dominators(start graph.Node, g graph.Graph) map[int]Set {
 // This returns all possible post-dominators for all nodes, it does not prune for strict
 // postdominators, immediate postdominators etc.
 func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
-	successors := setupFuncs(g, nil, nil).successors
+	from := setupFuncs(g, nil, nil).from
 
 	allNodes := make(Set)
 	nlist := g.NodeList()
@@ -648,7 +648,7 @@ func PostDominators(end graph.Node, g graph.Graph) map[int]Set {
 			if node.ID() == end.ID() {
 				continue
 			}
-			succs := successors(node)
+			succs := from(node)
 			if len(succs) == 0 {
 				continue
 			}

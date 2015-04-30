@@ -51,18 +51,18 @@ type Graph interface {
 // because in many cases it can be useful to know all neighbors regardless of direction.
 type DirectedGraph interface {
 	Graph
-	// Successors gives the nodes connected by OUTBOUND edges.
-	// If the graph is an undirected graph, this set is equal to Predecessors.
-	Successors(Node) []Node
+	// From gives the nodes connected by OUTBOUND edges.
+	// If the graph is an undirected graph, this set is equal to To.
+	From(Node) []Node
 
 	// EdgeTo returns an edge between node and successor such that
 	// Head returns node and Tail returns successor, if no
 	// such edge exists, this function returns nil.
 	EdgeTo(node, successor Node) Edge
 
-	// Predecessors gives the nodes connected by INBOUND edges.
-	// If the graph is an undirected graph, this set is equal to Successors.
-	Predecessors(Node) []Node
+	// To gives the nodes connected by INBOUND edges.
+	// If the graph is an undirected graph, this set is equal to From.
+	To(Node) []Node
 }
 
 // Returns all undirected edges in the graph

@@ -125,7 +125,7 @@ func (g *DirectedGraph) EmptyGraph() {
 
 /* Graph implementation */
 
-func (g *DirectedGraph) Successors(n graph.Node) []graph.Node {
+func (g *DirectedGraph) From(n graph.Node) []graph.Node {
 	if _, ok := g.successors[n.ID()]; !ok {
 		return nil
 	}
@@ -154,7 +154,7 @@ func (g *DirectedGraph) EdgeTo(n, succ graph.Node) graph.Edge {
 	return edge
 }
 
-func (g *DirectedGraph) Predecessors(n graph.Node) []graph.Node {
+func (g *DirectedGraph) To(n graph.Node) []graph.Node {
 	if _, ok := g.successors[n.ID()]; !ok {
 		return nil
 	}
