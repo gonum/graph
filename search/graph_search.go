@@ -98,11 +98,7 @@ func BreadthFirstSearch(start, goal graph.Node, g SourceSearchGraph) ([]graph.No
 //
 // Dijkstra's algorithm usually only returns a cost map, however, since the data is available
 // this version will also reconstruct the path to every node.
-func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64) {
-
-	sf := setupFuncs(g, cost, nil)
-	successors, cost, edgeTo := sf.successors, sf.cost, sf.edgeTo
-
+func Dijkstra(source graph.Node, g CostSearchGraph) (paths map[int][]graph.Node, costs map[int]float64) {
 	nodes := g.NodeList()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
 	costs = make(map[int]float64, len(nodes)) // May overallocate, will change if it becomes a problem
@@ -118,8 +114,9 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 
 		nodeIDMap[node.ID()] = node
 
-		for _, neighbor := range successors(node) {
-			tmpCost := costs[node.ID()] + cost(edgeTo(node, neighbor))
+		for _, edge := range g.Out(node) {
+			neighbor := edge.Tail()
+			tmpCost := costs[node.ID()] + g.Cost(edge)
 			if cost, ok := costs[neighbor.ID()]; !ok {
 				costs[neighbor.ID()] = tmpCost
 				predecessor[neighbor.ID()] = node
