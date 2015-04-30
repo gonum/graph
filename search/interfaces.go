@@ -40,7 +40,7 @@ type UnitNullGraph struct {
 	SourceSearchGraph
 }
 
-func (g *UnitNullGraph) Cost(_ graph.Edge) float64 {
+func (g *UnitNullGraph) Cost(_ graph.DirectedEdge) float64 {
 	return 1
 }
 
