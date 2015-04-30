@@ -227,20 +227,6 @@ func DepthFirstSearch(start, goal graph.Node, g SourceSearchGraph) []graph.Node 
 	return nil
 }
 
-// An admissible, consistent heuristic that won't speed up computation time at all.
-func NullHeuristic(_, _ graph.Node) float64 {
-	return 0
-}
-
-// Assumes all edges in the graph have the same weight (including edges that don't exist!)
-func UniformCost(e graph.Edge) float64 {
-	if e == nil {
-		return inf
-	}
-
-	return 1
-}
-
 /* Simple operations */
 
 // Copies a graph into the destination; maintaining all node IDs. The destination
