@@ -332,9 +332,7 @@ func (t *tarjan) strongconnect(v graph.Node) {
 // (only one node) but only if the node listed in path exists within the graph.
 //
 // Graph must be non-nil.
-func IsPath(path []graph.Node, g graph.Graph) bool {
-	isSuccessor := setupFuncs(g, nil, nil).isSuccessor
-
+func IsPath(path []graph.Node, g graph.NodeNeighborVerifier) bool {
 	if path == nil || len(path) == 0 {
 		return true
 	} else if len(path) == 1 {
@@ -342,7 +340,7 @@ func IsPath(path []graph.Node, g graph.Graph) bool {
 	}
 
 	for i := 0; i < len(path)-1; i++ {
-		if !isSuccessor(path[i], path[i+1]) {
+		if !g.IsSuccessor(path[i], path[i+1]) {
 			return false
 		}
 	}

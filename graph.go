@@ -64,3 +64,51 @@ type UndirectedCostGraph interface {
 type HeuristicCostGraph interface {
 	HeuristicCost(n1, n2 Node) float64
 }
+
+// NodeVerifier tests whether a node
+// is in the graph (or could be in
+// the graph for infinite cases).
+type NodeVerifier interface {
+	NodeExists(n Node) bool
+}
+
+// SuccessorVerifier tests whether the node n2
+// is a successor of n1. (That is, whether there
+// exists some edge such edge.Head() == n1 and
+// edge.Tail() == n2).
+//
+// Keep in mind that you automatically have
+// a predecessor verifier by implementing this
+// simply by reordering your nodes.
+type SuccessorVerifier interface {
+	IsSuccessor(n1, n2 Node) bool
+}
+
+// NeighborVerifier tests whether the nodes
+// n1 and n2 are the two ends of some edge in the graph.
+// This is agnostic to whether the edge is undirected or directed.
+type NeighborVerifier interface {
+	IsNeighbor(n1, n2 Node) bool
+}
+
+// NodeSuccessorVerifier can test if a node is in
+// the graph and whether one node is a successor of another.
+type NodeSuccessorVerifier interface {
+	NodeVerifier
+	SuccessorVerifier
+}
+
+// NodeNeighborVerifier can test if a node in in a graph,
+// as well as whether two nodes are adjacent. This is essentially
+// a general Verifier for an undirected graph.
+type NodeNeighborVerifier interface {
+	NodeVerifier
+	NeighborVerifier
+}
+
+// Verifier can verify any node property of a graph.
+type Verifier interface {
+	NodeVerifier
+	NeighborVerifier
+	SuccessorVerifier
+}
