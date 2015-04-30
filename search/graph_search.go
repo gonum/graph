@@ -195,10 +195,7 @@ func BellmanFord(source graph.Node, g FiniteCostSearchGraph) (paths map[int][]gr
 // Expands the first node it sees trying to find the destination. Depth First Search is *not*
 // guaranteed to find the shortest path, however, if a path exists DFS is guaranteed to find it
 // (provided you don't find a way to implement a Graph with an infinite depth.)
-func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
-	sf := setupFuncs(g, nil, nil)
-	successors := sf.successors
-
+func DepthFirstSearch(start, goal graph.Node, g SourceSearchGraph) []graph.Node {
 	closedSet := make(intSet)
 	openSet := &nodeStack{start}
 	predecessor := make(map[int]graph.Node)
@@ -216,7 +213,8 @@ func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
 
 		closedSet.add(curr.ID())
 
-		for _, neighbor := range successors(curr) {
+		for _, edge := range g.Out(curr) {
+			neighbor := edge.Tail()
 			if closedSet.has(neighbor.ID()) {
 				continue
 			}
