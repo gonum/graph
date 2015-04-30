@@ -29,21 +29,13 @@ import (
 // max(NonConsistentHeuristicCost(neighbor,goal), NonConsistentHeuristicCost(self,goal) -
 // Cost(self,neighbor)). If there are multiple neighbors, take the max of all of them.
 //
-// Cost and HeuristicCost take precedence for evaluating cost/heuristic distance. If one is not
-// present (i.e. nil) the function will check the graph's interface for the respective interface:
-// Coster for Cost and HeuristicCoster for HeuristicCost. If the correct one is present, it will
-// use the graph's function for evaluation.
 //
-// Finally, if neither the argument nor the interface is present, the function will assume
-// UniformCost for Cost and NullHeuristic for HeuristicCost.
+// To run Uniform Cost Search, run A* with the Null Heuristic (for all inputs heuristic is 0).
 //
-// To run Uniform Cost Search, run A* with the NullHeuristic.
-//
-// To run Breadth First Search, run A* with both the NullHeuristic and UniformCost (or any cost
-// function that returns a uniform positive value.)
-func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristicCost graph.HeuristicCostFunc) (path []graph.Node, pathCost float64, nodesExpanded int) {
-	sf := setupFuncs(g, cost, heuristicCost)
-	successors, cost, heuristicCost, edgeTo := sf.successors, sf.cost, sf.heuristicCost, sf.edgeTo
+// To run Breadth First Search, run A* with both the Null Heuristic and Unit Cost (or any cost
+// function that returns a uniform positive value.) A BreadthFirstSearch function is provided for
+// exactly this reason, but it is just a convenience wrapper for using AStar in this fashion.
+func AStar(start, goal graph.Node, g HeuristicSearchGraph) (path []graph.Node, pathCost float64, nodesExpanded int) {
 
 	closedSet := make(map[int]internalNode)
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -63,20 +55,21 @@ func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristic
 
 		closedSet[curr.ID()] = curr
 
-		for _, neighbor := range successors(curr.Node) {
+		for _, edge := range g.Out(curr.Node) {
+			neighbor := edge.Tail()
 			if _, ok := closedSet[neighbor.ID()]; ok {
 				continue
 			}
 
-			g := curr.gscore + cost(edgeTo(curr.Node, neighbor))
+			g := curr.gscore + g.Cost(edge)
 
 			if existing, exists := openSet.Find(neighbor.ID()); !exists {
 				predecessor[neighbor.ID()] = curr
-				node = internalNode{neighbor, g, g + heuristicCost(neighbor, goal)}
+				node = internalNode{neighbor, g, g + g.HeuristicCost(neighbor, goal)}
 				heap.Push(openSet, node)
 			} else if g < existing.gscore {
 				predecessor[neighbor.ID()] = curr
-				openSet.Fix(neighbor.ID(), g, g+heuristicCost(neighbor, goal))
+				openSet.Fix(neighbor.ID(), g, g+g.HeuristicCost(neighbor, goal))
 			}
 		}
 	}
@@ -88,8 +81,8 @@ func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristic
 //
 // BreadthFirstSearch returns the path found and the number of nodes visited in the search.
 // The returned path is nil if no path exists.
-func BreadthFirstSearch(start, goal graph.Node, g graph.Graph) ([]graph.Node, int) {
-	path, _, visited := AStar(start, goal, g, UniformCost, NullHeuristic)
+func BreadthFirstSearch(start, goal graph.Node, g SourceSearchGraph) ([]graph.Node, int) {
+	path, _, visited := AStar(start, goal, UnitNullGraph{g})
 	return path, visited
 }
 
