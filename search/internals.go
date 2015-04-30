@@ -9,14 +9,19 @@ import (
 	"math"
 
 	"github.com/gonum/graph"
-	"github.com/gonum/graph/concrete"
 )
 
 var inf = math.Inf(1)
 
 /** Sorts a list of edges by weight, agnostic to repeated edges as well as direction **/
 
-type byWeight []concrete.WeightedEdge
+// TODO: Switch back to a concrete version
+type WeightedEdge struct {
+	graph.DirectedEdge
+	Cost float64
+}
+
+type byWeight []WeightedEdge
 
 func (e byWeight) Len() int {
 	return len(e)

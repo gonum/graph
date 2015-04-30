@@ -7,10 +7,8 @@ package search
 import (
 	"container/heap"
 	"errors"
-	"sort"
 
 	"github.com/gonum/graph"
-	"github.com/gonum/graph/concrete"
 )
 
 // Returns an ordered list consisting of the nodes between start and goal. The path will be the
@@ -40,7 +38,7 @@ func AStar(start, goal graph.Node, g HeuristicSearchGraph) (path []graph.Node, p
 	closedSet := make(map[int]internalNode)
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
 	heap.Init(openSet)
-	node := internalNode{start, 0, heuristicCost(start, goal)}
+	node := internalNode{start, 0, g.HeuristicCost(start, goal)}
 	heap.Push(openSet, node)
 	predecessor := make(map[int]graph.Node)
 
@@ -61,15 +59,15 @@ func AStar(start, goal graph.Node, g HeuristicSearchGraph) (path []graph.Node, p
 				continue
 			}
 
-			g := curr.gscore + g.Cost(edge)
+			gscore := curr.gscore + g.Cost(edge)
 
 			if existing, exists := openSet.Find(neighbor.ID()); !exists {
 				predecessor[neighbor.ID()] = curr
-				node = internalNode{neighbor, g, g + g.HeuristicCost(neighbor, goal)}
+				node = internalNode{neighbor, gscore, gscore + g.HeuristicCost(neighbor, goal)}
 				heap.Push(openSet, node)
-			} else if g < existing.gscore {
+			} else if gscore < existing.gscore {
 				predecessor[neighbor.ID()] = curr
-				openSet.Fix(neighbor.ID(), g, g+g.HeuristicCost(neighbor, goal))
+				openSet.Fix(neighbor.ID(), gscore, gscore+g.HeuristicCost(neighbor, goal))
 			}
 		}
 	}
@@ -82,7 +80,7 @@ func AStar(start, goal graph.Node, g HeuristicSearchGraph) (path []graph.Node, p
 // BreadthFirstSearch returns the path found and the number of nodes visited in the search.
 // The returned path is nil if no path exists.
 func BreadthFirstSearch(start, goal graph.Node, g SourceSearchGraph) ([]graph.Node, int) {
-	path, _, visited := AStar(start, goal, UnitNullGraph{g})
+	path, _, visited := AStar(start, goal, &UnitNullGraph{g})
 	return path, visited
 }
 
@@ -99,11 +97,10 @@ func BreadthFirstSearch(start, goal graph.Node, g SourceSearchGraph) ([]graph.No
 // Dijkstra's algorithm usually only returns a cost map, however, since the data is available
 // this version will also reconstruct the path to every node.
 func Dijkstra(source graph.Node, g CostSearchGraph) (paths map[int][]graph.Node, costs map[int]float64) {
-	nodes := g.NodeList()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
-	costs = make(map[int]float64, len(nodes)) // May overallocate, will change if it becomes a problem
-	predecessor := make(map[int]graph.Node, len(nodes))
-	nodeIDMap := make(map[int]graph.Node, len(nodes))
+	costs = make(map[int]float64)
+	predecessor := make(map[int]graph.Node)
+	nodeIDMap := make(map[int]graph.Node)
 	heap.Init(openSet)
 
 	costs[source.ID()] = 0
@@ -163,7 +160,7 @@ func BellmanFord(source graph.Node, g FiniteCostSearchGraph) (paths map[int][]gr
 			nodeIDMap[node.ID()] = node
 			for _, edge := range g.Out(node) {
 				succ := edge.Tail()
-				weight := cost(edge)
+				weight := g.Cost(edge)
 				nodeIDMap[succ.ID()] = succ
 
 				if dist := costs[node.ID()] + weight; dist < costs[succ.ID()] {
@@ -178,7 +175,7 @@ func BellmanFord(source graph.Node, g FiniteCostSearchGraph) (paths map[int][]gr
 	for _, node := range nodes {
 		for _, edge := range g.Out(node) {
 			succ := edge.Tail()
-			weight := cost(edge)
+			weight := g.Cost(edge)
 			if costs[node.ID()]+weight < costs[succ.ID()] {
 				return nil, nil, errors.New("Negative edge cycle detected")
 			}
@@ -244,7 +241,7 @@ func DepthFirstSearch(start, goal graph.Node, g SourceSearchGraph) []graph.Node 
 func TarjanSCC(g FiniteSearchGraph) [][]graph.Node {
 	nodes := g.NodeList()
 	t := tarjan{
-		g: g,
+		SourceSearchGraph: g,
 
 		indexTable: make(map[int]int, len(nodes)),
 		lowLink:    make(map[int]int, len(nodes)),
@@ -264,7 +261,7 @@ func TarjanSCC(g FiniteSearchGraph) [][]graph.Node {
 // http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm?oldid=642744644
 //
 type tarjan struct {
-	g SourceSearchGraph
+	SourceSearchGraph
 
 	index      int
 	indexTable map[int]int
@@ -289,7 +286,7 @@ func (t *tarjan) strongconnect(v graph.Node) {
 	t.onStack.add(vID)
 
 	// Consider successors of v.
-	for _, edge := range g.Out(v) {
+	for _, edge := range t.Out(v) {
 		w := edge.Tail()
 		wID := w.ID()
 		if t.indexTable[wID] == 0 {
@@ -332,7 +329,7 @@ func (t *tarjan) strongconnect(v graph.Node) {
 // (only one node) but only if the node listed in path exists within the graph.
 //
 // Graph must be non-nil.
-func IsPath(path []graph.Node, g graph.NodeNeighborVerifier) bool {
+func IsPath(path []graph.Node, g graph.NodeSuccessorVerifier) bool {
 	if path == nil || len(path) == 0 {
 		return true
 	} else if len(path) == 1 {
@@ -383,7 +380,7 @@ func Dominators(start graph.Node, g graph.FiniteBackwardGraph) map[int]Set {
 			}
 			tmp := make(Set).copy(dominators[edges[0].Head().ID()])
 			for _, edge := range edges[1:] {
-				tmp.intersect(tmp, dominators[pred.Head().ID()])
+				tmp.intersect(tmp, dominators[edge.Head().ID()])
 			}
 
 			dom := make(Set)
@@ -405,8 +402,6 @@ func Dominators(start graph.Node, g graph.FiniteBackwardGraph) map[int]Set {
 // This returns all possible post-dominators for all nodes, it does not prune for strict
 // postdominators, immediate postdominators etc.
 func PostDominators(end graph.Node, g graph.FiniteForwardGraph) map[int]Set {
-	successors := setupFuncs(g, nil, nil).successors
-
 	allNodes := make(Set)
 	nlist := g.NodeList()
 	dominators := make(map[int]Set, len(nlist))
@@ -434,8 +429,8 @@ func PostDominators(end graph.Node, g graph.FiniteForwardGraph) map[int]Set {
 				continue
 			}
 			tmp := make(Set).copy(dominators[edges[0].Tail().ID()])
-			for _, edge := range succs[1:] {
-				tmp.intersect(tmp, dominators[edge[0].Tail().ID()])
+			for _, edge := range edges[1:] {
+				tmp.intersect(tmp, dominators[edge.Tail().ID()])
 			}
 
 			dom := make(Set)
@@ -466,14 +461,13 @@ func VertexOrdering(g graph.FiniteNeighborProvider) (order []graph.Node, cores [
 	// Compute a number d_v for each vertex v in G,
 	// the number of neighbors of v that are not already in L.
 	// Initially, these numbers are just the degrees of the vertices.
-	dv := make(map[int]int, len(nodes))
+	dv := make(map[int]uint, len(nodes))
 	var (
-		maxDegree  int
+		maxDegree  uint
 		neighbours = make(map[int][]graph.Node)
 	)
 	for _, n := range nodes {
-		var adj []graph.Node = nil
-		g.Edges(n)
+		adj := g.Neighbors(n)
 		neighbours[n.ID()] = adj
 		dv[n.ID()] = g.Degree(n)
 		if dv[n.ID()] > maxDegree {
