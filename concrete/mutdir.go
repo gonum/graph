@@ -207,6 +207,10 @@ func (g *DirectedGraph) Degree(n graph.Node) int {
 	return len(g.successors[n.ID()]) + len(g.predecessors[n.ID()])
 }
 
+func (g *DirectedGraph) Order() int {
+	return len(g.successors)
+}
+
 func (g *DirectedGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, len(g.successors))
 	i := 0

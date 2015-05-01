@@ -231,6 +231,16 @@ func (g *TileGraph) EdgeList() []graph.Edge {
 	return edges
 }
 
+func (g *TileGraph) Order() int {
+	var n int
+	for _, passable := range g.tiles {
+		if passable {
+			n++
+		}
+	}
+	return n
+}
+
 func (g *TileGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, 0)
 	for id, passable := range g.tiles {

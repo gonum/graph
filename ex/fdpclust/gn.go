@@ -80,6 +80,51 @@ func (g *GraphNode) has(n graph.Node, visited map[int]struct{}) bool {
 	return false
 }
 
+func (g *GraphNode) Order() int {
+	n := 1
+	visited := map[int]struct{}{g.id: struct{}{}}
+
+	for _, root := range g.roots {
+		n++
+		visited[root.ID()] = struct{}{}
+		n += root.order(visited)
+	}
+
+	for _, neigh := range g.neighbors {
+		n++
+		visited[neigh.ID()] = struct{}{}
+		if gn, ok := neigh.(*GraphNode); ok {
+			n += gn.order(visited)
+		}
+	}
+
+	return n
+}
+
+func (g *GraphNode) order(visited map[int]struct{}) int {
+	var n int
+	for _, root := range g.roots {
+		if _, ok := visited[root.ID()]; ok {
+			continue
+		}
+		visited[root.ID()] = struct{}{}
+		n++
+		n += root.order(visited)
+	}
+
+	for _, neigh := range g.neighbors {
+		if _, ok := visited[neigh.ID()]; ok {
+			continue
+		}
+		n++
+		if gn, ok := neigh.(*GraphNode); ok {
+			n += gn.order(visited)
+		}
+	}
+
+	return n
+}
+
 func (g *GraphNode) Nodes() []graph.Node {
 	toReturn := []graph.Node{g}
 	visited := map[int]struct{}{g.id: struct{}{}}

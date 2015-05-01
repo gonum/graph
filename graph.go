@@ -21,6 +21,9 @@ type Edge interface {
 
 // A Graph implements the behavior of a graph.
 type Graph interface {
+	// Order returns the order of the graph.
+	Order() int
+
 	// Has returns whether the graph has the given node.
 	Has(Node) bool
 

@@ -52,6 +52,10 @@ func (g *DirectedDenseGraph) Degree(n graph.Node) int {
 	return deg
 }
 
+func (g *DirectedDenseGraph) Order() int {
+	return g.numNodes
+}
+
 func (g *DirectedDenseGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, g.numNodes)
 	for i := 0; i < g.numNodes; i++ {

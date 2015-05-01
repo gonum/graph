@@ -54,6 +54,10 @@ func (g *UndirectedDenseGraph) Degree(n graph.Node) int {
 	return deg
 }
 
+func (g *UndirectedDenseGraph) Order() int {
+	return g.numNodes
+}
+
 func (g *UndirectedDenseGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, g.numNodes)
 	for i := 0; i < g.numNodes; i++ {

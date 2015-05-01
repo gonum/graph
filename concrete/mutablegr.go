@@ -184,6 +184,10 @@ func (g *Graph) Has(n graph.Node) bool {
 	return ok
 }
 
+func (g *Graph) Order() int {
+	return len(g.nodeMap)
+}
+
 func (g *Graph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, len(g.nodeMap))
 	i := 0
