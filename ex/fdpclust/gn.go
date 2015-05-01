@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/concrete"
+	"github.com/gonum/graph/internal"
 )
 
 type GraphNode struct {
@@ -16,7 +17,7 @@ func (g *GraphNode) Has(n graph.Node) bool {
 		return true
 	}
 
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 	for _, root := range g.roots {
 		if root.ID() == n.ID() {
 			return true
@@ -42,13 +43,13 @@ func (g *GraphNode) Has(n graph.Node) bool {
 	return false
 }
 
-func (g *GraphNode) has(n graph.Node, visited map[int]struct{}) bool {
+func (g *GraphNode) has(n graph.Node, visited internal.IntSet) bool {
 	for _, root := range g.roots {
-		if _, ok := visited[root.ID()]; ok {
+		if visited.Has(root.ID()) {
 			continue
 		}
 
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		if root.ID() == n.ID() {
 			return true
 		}
@@ -60,11 +61,11 @@ func (g *GraphNode) has(n graph.Node, visited map[int]struct{}) bool {
 	}
 
 	for _, neigh := range g.neighbors {
-		if _, ok := visited[neigh.ID()]; ok {
+		if visited.Has(neigh.ID()) {
 			continue
 		}
 
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 		if neigh.ID() == n.ID() {
 			return true
 		}
@@ -82,17 +83,17 @@ func (g *GraphNode) has(n graph.Node, visited map[int]struct{}) bool {
 
 func (g *GraphNode) Order() int {
 	n := 1
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 
 	for _, root := range g.roots {
 		n++
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		n += root.order(visited)
 	}
 
 	for _, neigh := range g.neighbors {
 		n++
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 		if gn, ok := neigh.(*GraphNode); ok {
 			n += gn.order(visited)
 		}
@@ -101,19 +102,19 @@ func (g *GraphNode) Order() int {
 	return n
 }
 
-func (g *GraphNode) order(visited map[int]struct{}) int {
+func (g *GraphNode) order(visited internal.IntSet) int {
 	var n int
 	for _, root := range g.roots {
-		if _, ok := visited[root.ID()]; ok {
+		if visited.Has(root.ID()) {
 			continue
 		}
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		n++
 		n += root.order(visited)
 	}
 
 	for _, neigh := range g.neighbors {
-		if _, ok := visited[neigh.ID()]; ok {
+		if visited.Has(neigh.ID()) {
 			continue
 		}
 		n++
@@ -127,18 +128,18 @@ func (g *GraphNode) order(visited map[int]struct{}) int {
 
 func (g *GraphNode) Nodes() []graph.Node {
 	toReturn := []graph.Node{g}
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 
 	for _, root := range g.roots {
 		toReturn = append(toReturn, root)
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 
 		toReturn = root.nodes(toReturn, visited)
 	}
 
 	for _, neigh := range g.neighbors {
 		toReturn = append(toReturn, neigh)
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 
 		if gn, ok := neigh.(*GraphNode); ok {
 			toReturn = gn.nodes(toReturn, visited)
@@ -148,19 +149,19 @@ func (g *GraphNode) Nodes() []graph.Node {
 	return toReturn
 }
 
-func (g *GraphNode) nodes(list []graph.Node, visited map[int]struct{}) []graph.Node {
+func (g *GraphNode) nodes(list []graph.Node, visited internal.IntSet) []graph.Node {
 	for _, root := range g.roots {
-		if _, ok := visited[root.ID()]; ok {
+		if visited.Has(root.ID()) {
 			continue
 		}
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		list = append(list, graph.Node(root))
 
 		list = root.nodes(list, visited)
 	}
 
 	for _, neigh := range g.neighbors {
-		if _, ok := visited[neigh.ID()]; ok {
+		if visited.Has(neigh.ID()) {
 			continue
 		}
 
@@ -178,9 +179,9 @@ func (g *GraphNode) From(n graph.Node) []graph.Node {
 		return g.neighbors
 	}
 
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 	for _, root := range g.roots {
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 
 		if result := root.findNeighbors(n, visited); result != nil {
 			return result
@@ -188,7 +189,7 @@ func (g *GraphNode) From(n graph.Node) []graph.Node {
 	}
 
 	for _, neigh := range g.neighbors {
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 
 		if gn, ok := neigh.(*GraphNode); ok {
 			if result := gn.findNeighbors(n, visited); result != nil {
@@ -200,16 +201,16 @@ func (g *GraphNode) From(n graph.Node) []graph.Node {
 	return nil
 }
 
-func (g *GraphNode) findNeighbors(n graph.Node, visited map[int]struct{}) []graph.Node {
+func (g *GraphNode) findNeighbors(n graph.Node, visited internal.IntSet) []graph.Node {
 	if n.ID() == g.ID() {
 		return g.neighbors
 	}
 
 	for _, root := range g.roots {
-		if _, ok := visited[root.ID()]; ok {
+		if visited.Has(root.ID()) {
 			continue
 		}
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 
 		if result := root.findNeighbors(n, visited); result != nil {
 			return result
@@ -217,10 +218,10 @@ func (g *GraphNode) findNeighbors(n graph.Node, visited map[int]struct{}) []grap
 	}
 
 	for _, neigh := range g.neighbors {
-		if _, ok := visited[neigh.ID()]; ok {
+		if visited.Has(neigh.ID()) {
 			continue
 		}
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 
 		if gn, ok := neigh.(*GraphNode); ok {
 			if result := gn.findNeighbors(n, visited); result != nil {
@@ -243,16 +244,16 @@ func (g *GraphNode) HasEdge(n, neighbor graph.Node) bool {
 		return false
 	}
 
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 	for _, root := range g.roots {
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		if root.edgeBetween(n, neighbor, visited) != nil {
 			return true
 		}
 	}
 
 	for _, neigh := range g.neighbors {
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 		if gn, ok := neigh.(*GraphNode); ok {
 			if gn.edgeBetween(n, neighbor, visited) != nil {
 				return true
@@ -274,16 +275,16 @@ func (g *GraphNode) EdgeBetween(n, neighbor graph.Node) graph.Edge {
 		return nil
 	}
 
-	visited := map[int]struct{}{g.id: struct{}{}}
+	visited := internal.IntSet{g.id: struct{}{}}
 	for _, root := range g.roots {
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		if result := root.edgeBetween(n, neighbor, visited); result != nil {
 			return result
 		}
 	}
 
 	for _, neigh := range g.neighbors {
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 		if gn, ok := neigh.(*GraphNode); ok {
 			if result := gn.edgeBetween(n, neighbor, visited); result != nil {
 				return result
@@ -294,7 +295,7 @@ func (g *GraphNode) EdgeBetween(n, neighbor graph.Node) graph.Edge {
 	return nil
 }
 
-func (g *GraphNode) edgeBetween(n, neighbor graph.Node, visited map[int]struct{}) graph.Edge {
+func (g *GraphNode) edgeBetween(n, neighbor graph.Node, visited internal.IntSet) graph.Edge {
 	if n.ID() == g.id || neighbor.ID() == g.id {
 		for _, neigh := range g.neighbors {
 			if neigh.ID() == n.ID() || neigh.ID() == neighbor.ID() {
@@ -306,21 +307,21 @@ func (g *GraphNode) edgeBetween(n, neighbor graph.Node, visited map[int]struct{}
 	}
 
 	for _, root := range g.roots {
-		if _, ok := visited[root.ID()]; ok {
+		if visited.Has(root.ID()) {
 			continue
 		}
-		visited[root.ID()] = struct{}{}
+		visited.Add(root.ID())
 		if result := root.edgeBetween(n, neighbor, visited); result != nil {
 			return result
 		}
 	}
 
 	for _, neigh := range g.neighbors {
-		if _, ok := visited[neigh.ID()]; ok {
+		if visited.Has(neigh.ID()) {
 			continue
 		}
 
-		visited[neigh.ID()] = struct{}{}
+		visited.Add(neigh.ID())
 		if gn, ok := neigh.(*GraphNode); ok {
 			if result := gn.edgeBetween(n, neighbor, visited); result != nil {
 				return result
