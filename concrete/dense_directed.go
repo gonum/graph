@@ -102,11 +102,11 @@ func (g *DirectedDenseGraph) Cost(e graph.Edge) float64 {
 	return g.mat.At(e.Head().ID(), e.Tail().ID())
 }
 
-func (g *DirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64, directed bool) {
+func (g *DirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64) {
 	g.mat.Set(e.Head().ID(), e.Tail().ID(), cost)
 }
 
-func (g *DirectedDenseGraph) RemoveEdge(e graph.Edge, directed bool) {
+func (g *DirectedDenseGraph) RemoveEdge(e graph.Edge) {
 	g.mat.Set(e.Head().ID(), e.Tail().ID(), inf)
 }
 

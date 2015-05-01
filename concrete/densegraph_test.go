@@ -66,14 +66,14 @@ func TestBasicDensePassable(t *testing.T) {
 
 func TestDirectedDenseAddRemove(t *testing.T) {
 	dg := concrete.NewDirectedDenseGraph(10, false)
-	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1, false)
+	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1)
 
 	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
 		dg.EdgeFromTo(concrete.Node(0), concrete.Node(2)) == nil {
 		t.Errorf("Adding edge didn't create successor")
 	}
 
-	dg.RemoveEdge(concrete.Edge{concrete.Node(0), concrete.Node(2)}, true)
+	dg.RemoveEdge(concrete.Edge{concrete.Node(0), concrete.Node(2)})
 
 	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 0 || dg.EdgeFromTo(concrete.Node(0), concrete.Node(2)) != nil {
 		t.Errorf("Removing edge didn't properly remove successor")
@@ -83,7 +83,7 @@ func TestDirectedDenseAddRemove(t *testing.T) {
 		t.Errorf("Removing directed edge wrongly kept predecessor")
 	}
 
-	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 2, true)
+	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 2)
 	// I figure we've torture tested From/To at this point
 	// so we'll just use the bool functions now
 	if dg.EdgeFromTo(concrete.Node(0), concrete.Node(2)) == nil {
@@ -95,7 +95,7 @@ func TestDirectedDenseAddRemove(t *testing.T) {
 
 func TestUndirectedDenseAddRemove(t *testing.T) {
 	dg := concrete.NewUndirectedDenseGraph(10, false)
-	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1, false)
+	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1)
 
 	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
 		dg.EdgeBetween(concrete.Node(0), concrete.Node(2)) == nil {
@@ -143,7 +143,7 @@ func TestDenseLists(t *testing.T) {
 		t.Errorf("Improper number of edges for passable dense graph")
 	}
 
-	dg.RemoveEdge(concrete.Edge{concrete.Node(12), concrete.Node(11)}, true)
+	dg.RemoveEdge(concrete.Edge{concrete.Node(12), concrete.Node(11)})
 	edges = dg.DirectedEdgeList()
 	if len(edges) != (15*15)-1 {
 		t.Errorf("Removing edge didn't affect edge listing properly")

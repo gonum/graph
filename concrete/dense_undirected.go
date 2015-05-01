@@ -92,11 +92,11 @@ func (g *UndirectedDenseGraph) Cost(e graph.Edge) float64 {
 	return g.mat.At(e.Head().ID(), e.Tail().ID())
 }
 
-func (g *UndirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64, directed bool) {
+func (g *UndirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64) {
 	g.mat.SetSym(e.Head().ID(), e.Tail().ID(), cost)
 }
 
-func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge, directed bool) {
+func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge) {
 	g.mat.SetSym(e.Head().ID(), e.Tail().ID(), inf)
 }
 
