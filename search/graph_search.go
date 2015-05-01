@@ -333,40 +333,6 @@ func UniformCost(e graph.Edge) float64 {
 	return 1
 }
 
-/* Simple operations */
-
-// Copies a graph into the destination; maintaining all node IDs. The destination
-// need not be empty, though overlapping node IDs and conflicting edges will overwrite
-// existing data.
-func CopyUndirected(dst graph.MutableUndirected, src graph.Undirected) {
-	cost := setupFuncs(src, nil, nil).cost
-
-	for _, node := range src.Nodes() {
-		dst.AddNode(node)
-		for _, succ := range src.From(node) {
-			edge := src.EdgeBetween(node, succ)
-			dst.AddUndirectedEdge(edge, cost(edge))
-		}
-	}
-}
-
-// Copies a graph into the destination; maintaining all node IDs. The destination
-// need not be empty, though overlapping node IDs and conflicting edges will overwrite
-// existing data.
-func CopyDirected(dst graph.MutableDirected, src graph.Directed) {
-	cost := setupFuncs(src, nil, nil).cost
-
-	for _, node := range src.Nodes() {
-		succs := src.From(node)
-		dst.AddNode(node)
-		for _, succ := range succs {
-			edge := src.EdgeFromTo(node, succ)
-			dst.AddDirectedEdge(edge, cost(edge))
-		}
-	}
-
-}
-
 /* Basic Graph tests */
 
 // TarjanSCC returns the strongly connected components of the graph g using Tarjan's algorithm.
