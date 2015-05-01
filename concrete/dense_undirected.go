@@ -6,81 +6,79 @@ package concrete
 
 import (
 	"github.com/gonum/graph"
+	"github.com/gonum/matrix/mat64"
 )
 
-// A dense graph is a graph such that all IDs are in a contiguous block from 0 to
-// TheNumberOfNodes-1. It uses an adjacency matrix and should be relatively fast for both access
-// and writing.
-//
-// This graph implements the CrunchGraph, but since it's naturally dense this is superfluous.
+// UndirectedDenseGraph represents a graph such that all IDs are in a contiguous
+// block from 0 to n-1.
 type UndirectedDenseGraph struct {
-	adjacencyMatrix []float64
-	numNodes        int
+	mat *mat64.SymDense
 }
 
-// Creates a dense graph with the proper number of nodes. If passable is true all nodes will have
-// an edge with unit cost, otherwise every node will start unconnected (cost of +Inf).
-func NewUndirectedDenseGraph(numNodes int, passable bool) *UndirectedDenseGraph {
-	g := &UndirectedDenseGraph{adjacencyMatrix: make([]float64, numNodes*numNodes), numNodes: numNodes}
-	if passable {
-		for i := range g.adjacencyMatrix {
-			g.adjacencyMatrix[i] = 1
-		}
-	} else {
-		for i := range g.adjacencyMatrix {
-			g.adjacencyMatrix[i] = inf
-		}
+// NewUndirectedDenseGraph creates an undirected dense graph with n nodes.
+// If passable is true all nodes will have an edge with unit cost, otherwise
+// every node will start unconnected (cost of +Inf).
+func NewUndirectedDenseGraph(n int, passable bool) *UndirectedDenseGraph {
+	mat := make([]float64, n*n)
+	v := 1.
+	if !passable {
+		v = inf
 	}
-
-	return g
+	for i := range mat {
+		mat[i] = v
+	}
+	return &UndirectedDenseGraph{mat64.NewSymDense(n, mat)}
 }
 
 func (g *UndirectedDenseGraph) Has(n graph.Node) bool {
-	return n.ID() < g.numNodes
-}
-
-func (g *UndirectedDenseGraph) Degree(n graph.Node) int {
-	deg := 0
-	for i := 0; i < g.numNodes; i++ {
-		if g.adjacencyMatrix[i*g.numNodes+n.ID()] != inf {
-			deg++
-		}
-
-		if g.adjacencyMatrix[n.ID()*g.numNodes+i] != inf {
-			deg++
-		}
-	}
-
-	return deg
+	id := n.ID()
+	r := g.mat.Symmetric()
+	return 0 <= id && id < r
 }
 
 func (g *UndirectedDenseGraph) Order() int {
-	return g.numNodes
+	r, _ := g.mat.Dims()
+	return r
 }
 
 func (g *UndirectedDenseGraph) Nodes() []graph.Node {
-	nodes := make([]graph.Node, g.numNodes)
-	for i := 0; i < g.numNodes; i++ {
+	r := g.mat.Symmetric()
+	nodes := make([]graph.Node, r)
+	for i := 0; i < r; i++ {
 		nodes[i] = Node(i)
 	}
-
 	return nodes
 }
 
+func (g *UndirectedDenseGraph) Degree(n graph.Node) int {
+	id := n.ID()
+	var deg int
+	if g.mat.At(id, id) != inf {
+		deg = 1
+	}
+	r := g.mat.Symmetric()
+	for i := 0; i < r; i++ {
+		if g.mat.At(id, i) != inf {
+			deg++
+		}
+	}
+	return deg
+}
+
 func (g *UndirectedDenseGraph) From(n graph.Node) []graph.Node {
-	neighbors := make([]graph.Node, 0)
-	for i := 0; i < g.numNodes; i++ {
-		if g.adjacencyMatrix[i*g.numNodes+n.ID()] != inf ||
-			g.adjacencyMatrix[n.ID()*g.numNodes+i] != inf {
+	var neighbors []graph.Node
+	id := n.ID()
+	r := g.mat.Symmetric()
+	for i := 0; i < r; i++ {
+		if g.mat.At(id, i) != inf {
 			neighbors = append(neighbors, Node(i))
 		}
 	}
-
 	return neighbors
 }
 
 func (g *UndirectedDenseGraph) HasEdge(n, neighbor graph.Node) bool {
-	return g.adjacencyMatrix[neighbor.ID()*g.numNodes+n.ID()] != inf || g.adjacencyMatrix[n.ID()*g.numNodes+neighbor.ID()] != inf
+	return g.mat.At(n.ID(), neighbor.ID()) != inf
 }
 
 func (g *UndirectedDenseGraph) EdgeBetween(n, neighbor graph.Node) graph.Edge {
@@ -91,20 +89,21 @@ func (g *UndirectedDenseGraph) EdgeBetween(n, neighbor graph.Node) graph.Edge {
 }
 
 func (g *UndirectedDenseGraph) Cost(e graph.Edge) float64 {
-	return g.adjacencyMatrix[e.Head().ID()*g.numNodes+e.Tail().ID()]
+	return g.mat.At(e.Head().ID(), e.Tail().ID())
 }
 
-// Sets the cost of an edge. If the cost is +Inf, it will remove the edge,
-// if directed is true, it will only remove the edge one way. If it's false it will change the cost
-// of the edge from succ to node as well.
 func (g *UndirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64, directed bool) {
-	g.adjacencyMatrix[e.Head().ID()*g.numNodes+e.Tail().ID()] = cost
-	g.adjacencyMatrix[e.Tail().ID()*g.numNodes+e.Head().ID()] = cost
+	g.mat.SetSym(e.Head().ID(), e.Tail().ID(), cost)
 }
 
-// Equivalent to SetEdgeCost(edge, math.Inf(1), directed)
 func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge, directed bool) {
-	g.SetEdgeCost(e, inf, directed)
+	g.mat.SetSym(e.Head().ID(), e.Tail().ID(), inf)
+}
+
+func (g *UndirectedDenseGraph) Matrix() *mat64.SymDense {
+	// Prevent alteration of dimentions of the returned matrix.
+	m := *g.mat
+	return &m
 }
 
 func (g *UndirectedDenseGraph) Crunch() {}

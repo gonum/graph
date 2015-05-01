@@ -52,8 +52,8 @@ func TestBasicDensePassable(t *testing.T) {
 			t.Errorf("Node that should exist doesn't: %d", i)
 		}
 
-		if degree := dg.Degree(concrete.Node(i)); degree != 10 {
-			t.Errorf("Node in impassable graph has a neighbor. Node: %d Degree: %d", i, degree)
+		if degree := dg.Degree(concrete.Node(i)); degree != 6 {
+			t.Errorf("Node in passable graph missing neighbors. Node: %d Degree: %d", i, degree)
 		}
 	}
 
