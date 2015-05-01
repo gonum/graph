@@ -11,12 +11,14 @@ import (
 	"github.com/gonum/graph/concrete"
 )
 
-var _ graph.Graph = (*concrete.Graph)(nil)
-var _ graph.Graph = (*concrete.Graph)(nil)
+var (
+	_ graph.Graph      = (*concrete.Graph)(nil)
+	_ graph.Undirected = (*concrete.Graph)(nil)
+)
 
 func TestAssertMutableNotDirected(t *testing.T) {
-	var g graph.MutableGraph = concrete.NewGraph()
-	if _, ok := g.(graph.DirectedGraph); ok {
+	var g graph.MutableUndirected = concrete.NewGraph()
+	if _, ok := g.(graph.Directed); ok {
 		t.Fatal("concrete.Graph is directed, but a MutableGraph cannot safely be directed!")
 	}
 }

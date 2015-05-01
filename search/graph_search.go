@@ -338,7 +338,7 @@ func UniformCost(e graph.Edge) float64 {
 // Copies a graph into the destination; maintaining all node IDs. The destination
 // need not be empty, though overlapping node IDs and conflicting edges will overwrite
 // existing data.
-func CopyUndirectedGraph(dst graph.MutableGraph, src graph.UndirectedGraph) {
+func CopyUndirected(dst graph.MutableUndirected, src graph.Undirected) {
 	cost := setupFuncs(src, nil, nil).cost
 
 	for _, node := range src.Nodes() {
@@ -353,7 +353,7 @@ func CopyUndirectedGraph(dst graph.MutableGraph, src graph.UndirectedGraph) {
 // Copies a graph into the destination; maintaining all node IDs. The destination
 // need not be empty, though overlapping node IDs and conflicting edges will overwrite
 // existing data.
-func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) {
+func CopyDirected(dst graph.MutableDirected, src graph.Directed) {
 	cost := setupFuncs(src, nil, nil).cost
 
 	for _, node := range src.Nodes() {
@@ -378,7 +378,7 @@ func CopyDirectedGraph(dst graph.MutableDirectedGraph, src graph.DirectedGraph) 
 // to the number of nodes is acyclic, unless you count reflexive edges as a cycle (which requires
 // only a little extra testing.)
 //
-func TarjanSCC(g graph.DirectedGraph) [][]graph.Node {
+func TarjanSCC(g graph.Directed) [][]graph.Node {
 	nodes := g.Nodes()
 	t := tarjan{
 		succ: g.From,
@@ -495,7 +495,7 @@ puts the resulting minimum spanning tree in the dst graph */
 // Argument > Interface > UniformCost.
 //
 // The destination must be empty (or at least disjoint with the node IDs of the input)
-func Prim(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
+func Prim(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
 	sf := setupFuncs(g, cost, nil)
 	cost = sf.cost
 
@@ -536,7 +536,7 @@ func Prim(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
 // As with other algorithms with Cost, the precedence goes Argument > Interface > UniformCost.
 //
 // The destination must be empty (or at least disjoint with the node IDs of the input)
-func Kruskal(dst graph.MutableGraph, g graph.EdgeListGraph, cost graph.CostFunc) {
+func Kruskal(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
 	cost = setupFuncs(g, cost, nil).cost
 
 	edgeList := g.Edges()
@@ -886,7 +886,7 @@ func (*bronKerbosch) choosePivotFrom(g graph.Graph, p, x Set) (neighbors []graph
 
 // ConnectedComponents returns the connected components of the graph g. All
 // edges are treated as undirected.
-func ConnectedComponents(g graph.UndirectedGraph) [][]graph.Node {
+func ConnectedComponents(g graph.Undirected) [][]graph.Node {
 	var (
 		w  traverse.DepthFirst
 		c  []graph.Node

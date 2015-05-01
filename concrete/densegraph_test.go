@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ graph.Graph         = (*concrete.UndirectedDenseGraph)(nil)
-	_ graph.DirectedGraph = (*concrete.DirectedDenseGraph)(nil)
+	_ graph.Graph    = (*concrete.UndirectedDenseGraph)(nil)
+	_ graph.Directed = (*concrete.DirectedDenseGraph)(nil)
 )
 
 func TestBasicDenseImpassable(t *testing.T) {

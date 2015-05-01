@@ -38,9 +38,9 @@ type Graph interface {
 // A Graph implements the behavior of an undirected graph.
 //
 // All methods in Graph are implicitly undirected. Graph algorithms that care about directionality
-// will intelligently choose the DirectedGraph behavior if that interface is also implemented,
+// will intelligently choose the Directed behavior if that interface is also implemented,
 // even if the function itself only takes in a Graph (or a super-interface of graph).
-type UndirectedGraph interface {
+type Undirected interface {
 	Graph
 
 	// EdgeBetween returns the edge between node u and v such that
@@ -55,7 +55,7 @@ type UndirectedGraph interface {
 // While it's possible for a directed graph to have fully reciprocal edges (i.e. the graph is
 // symmetric) -- it is not required to be. The graph is also required to implement Graph
 // because in many cases it can be useful to know all neighbors regardless of direction.
-type DirectedGraph interface {
+type Directed interface {
 	Graph
 
 	// To gives the nodes connected by INBOUND edges.
@@ -73,7 +73,7 @@ type EdgeLister interface {
 	Edges() []Edge
 }
 
-type EdgeListGraph interface {
+type EdgeList interface {
 	Graph
 	EdgeLister
 }
@@ -83,7 +83,7 @@ type DirectedEdgeLister interface {
 	DirectedEdges() []Edge
 }
 
-type DirectedEdgeListGraph interface {
+type DirectedEdgeList interface {
 	Graph
 	DirectedEdgeLister
 }
@@ -103,9 +103,9 @@ type CostGraph interface {
 	Graph
 }
 
-type CostDirectedGraph interface {
+type CostDirected interface {
 	Coster
-	DirectedGraph
+	Directed
 }
 
 // A graph that implements HeuristicCoster implements a heuristic between any two given nodes.
@@ -127,7 +127,7 @@ type HeuristicCoster interface {
 // In any case where conflict is possible (e.g. adding two nodes with the same ID), the later
 // call always supercedes the earlier one.
 //
-// Functions will generally expect one of MutableGraph or MutableDirectedGraph and not Mutable
+// Functions will generally expect one of Mutable or MutableDirected and not Mutable
 // itself. That said, any function that takes Mutable[x], the destination mutable should
 // always be a different graph than the source.
 type Mutable interface {
@@ -143,13 +143,13 @@ type Mutable interface {
 	RemoveNode(Node)
 }
 
-// MutableGraph is an interface ensuring the implementation of the ability to construct
+// Mutable is an interface ensuring the implementation of the ability to construct
 // an arbitrary undirected graph. It is very important to note that any implementation
-// of MutableGraph absolutely cannot safely implement the DirectedGraph interface.
+// of Mutable absolutely cannot safely implement the Directed interface.
 //
-// A MutableGraph is required to store any Edge argument in the same way Mutable must
+// A Mutable is required to store any Edge argument in the same way Mutable must
 // store a Node argument -- any retrieval call is required to return the exact supplied edge.
-// This is what makes it incompatible with DirectedGraph.
+// This is what makes it incompatible with Directed.
 //
 // The reasoning is this: if you call AddUndirectedEdge(Edge{head,tail}); you are required
 // to return the exact edge passed in when a retrieval method (EdgeTo/EdgeBetween) is called.
@@ -157,7 +157,7 @@ type Mutable interface {
 // Edge{head,tail} this function MUST return Edge{head,tail}. However, EdgeTo requires this
 // be returned as Edge{tail,head}. Thus there's a conflict that cannot be resolved between the
 // two interface requirements.
-type MutableGraph interface {
+type MutableUndirected interface {
 	CostGraph
 	Mutable
 
@@ -172,16 +172,16 @@ type MutableGraph interface {
 	RemoveUndirectedEdge(Edge)
 }
 
-// MutableDirectedGraph is an interface that ensures one can construct an arbitrary directed
-// graph. Naturally, a MutableDirectedGraph works for both undirected and directed cases,
-// but simply using a MutableGraph may be cleaner. As the documentation for MutableGraph
-// notes, however, a graph cannot safely implement MutableGraph and MutableDirectedGraph
-// at the same time, because of the functionality of a EdgeTo in DirectedGraph.
-type MutableDirectedGraph interface {
-	CostDirectedGraph
+// MutableDirected is an interface that ensures one can construct an arbitrary directed
+// graph. Naturally, a MutableDirected works for both undirected and directed cases,
+// but simply using a Mutable may be cleaner. As the documentation for Mutable
+// notes, however, a graph cannot safely implement Mutable and MutableDirected
+// at the same time, because of the functionality of a EdgeTo in Directed.
+type MutableDirected interface {
+	CostDirected
 	Mutable
 
-	// Like EdgeTo in DirectedGraph, AddDirectedEdge adds an edge FROM head TO tail.
+	// Like EdgeTo in Directed, AddDirectedEdge adds an edge FROM head TO tail.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
 	// if the nodes already exist it should NOT replace existing nodes with e.Head() or
 	// e.Tail(). Overwriting nodes should explicitly be done with another call to AddNode()

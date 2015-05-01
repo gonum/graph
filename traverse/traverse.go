@@ -32,9 +32,9 @@ func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.N
 
 	var edgeFor func(u, v graph.Node) graph.Edge
 	switch g := g.(type) {
-	case graph.UndirectedGraph:
+	case graph.Undirected:
 		edgeFor = g.EdgeBetween
-	case graph.DirectedGraph:
+	case graph.Directed:
 		edgeFor = g.EdgeFromTo
 	default:
 		edgeFor = func(u, v graph.Node) graph.Edge {
@@ -83,7 +83,7 @@ func (b *BreadthFirst) Walk(g graph.Graph, from graph.Node, until func(n graph.N
 // of their direction. The functions before and after are called prior to commencing
 // and after completing each walk if they are non-nil respectively. The function
 // during is called on each node as it is traversed.
-func (b *BreadthFirst) WalkAll(g graph.UndirectedGraph, before, after func(), during func(graph.Node)) {
+func (b *BreadthFirst) WalkAll(g graph.Undirected, before, after func(), during func(graph.Node)) {
 	b.Reset()
 	for _, from := range g.Nodes() {
 		if b.Visited(from) {
@@ -138,9 +138,9 @@ func (d *DepthFirst) Walk(g graph.Graph, from graph.Node, until func(graph.Node)
 
 	var edgeFor func(u, v graph.Node) graph.Edge
 	switch g := g.(type) {
-	case graph.UndirectedGraph:
+	case graph.Undirected:
 		edgeFor = g.EdgeBetween
-	case graph.DirectedGraph:
+	case graph.Directed:
 		edgeFor = g.EdgeFromTo
 	default:
 		edgeFor = func(u, v graph.Node) graph.Edge {
@@ -178,7 +178,7 @@ func (d *DepthFirst) Walk(g graph.Graph, from graph.Node, until func(graph.Node)
 // of their direction. The functions before and after are called prior to commencing
 // and after completing each walk if they are non-nil respectively. The function
 // during is called on each node as it is traversed.
-func (d *DepthFirst) WalkAll(g graph.UndirectedGraph, before, after func(), during func(graph.Node)) {
+func (d *DepthFirst) WalkAll(g graph.Undirected, before, after func(), during func(graph.Node)) {
 	d.Reset()
 	for _, from := range g.Nodes() {
 		if d.Visited(from) {

@@ -300,7 +300,7 @@ func TestWalkAll(t *testing.T) {
 			}
 		}
 		type walker interface {
-			WalkAll(g graph.UndirectedGraph, before, after func(), during func(graph.Node))
+			WalkAll(g graph.Undirected, before, after func(), during func(graph.Node))
 		}
 		for _, w := range []walker{
 			&traverse.BreadthFirst{},

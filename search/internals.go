@@ -22,13 +22,13 @@ type searchFuncs struct {
 	edgeTo, edgeBetween                    func(graph.Node, graph.Node) graph.Edge
 }
 
-func genIsSuccessor(g graph.DirectedGraph) func(graph.Node, graph.Node) bool {
+func genIsSuccessor(g graph.Directed) func(graph.Node, graph.Node) bool {
 	return func(node, succ graph.Node) bool {
 		return g.EdgeFromTo(node, succ) != nil
 	}
 }
 
-func genIsPredecessor(g graph.DirectedGraph) func(graph.Node, graph.Node) bool {
+func genIsPredecessor(g graph.Directed) func(graph.Node, graph.Node) bool {
 	return func(node, succ graph.Node) bool {
 		return g.EdgeFromTo(succ, node) != nil
 	}
@@ -57,7 +57,7 @@ func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.Heuristi
 	var sf searchFuncs
 
 	switch g := g.(type) {
-	case graph.DirectedGraph:
+	case graph.Directed:
 		sf.from = g.From
 		sf.to = g.To
 		sf.isSuccessor = genIsSuccessor(g)
@@ -65,7 +65,7 @@ func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.Heuristi
 		sf.isNeighbor = g.HasEdge
 		sf.edgeBetween = g.EdgeFromTo
 		sf.edgeTo = g.EdgeFromTo
-	case graph.UndirectedGraph:
+	case graph.Undirected:
 		sf.from = g.From
 		sf.to = g.From
 		isNeighbor := g.HasEdge

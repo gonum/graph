@@ -11,9 +11,10 @@ import (
 	"github.com/gonum/graph/concrete"
 )
 
-var _ graph.Graph = &concrete.DirectedGraph{}
-var _ graph.DirectedGraph = &concrete.DirectedGraph{}
-var _ graph.DirectedGraph = &concrete.DirectedGraph{}
+var (
+	_ graph.Graph    = (*concrete.DirectedGraph)(nil)
+	_ graph.Directed = (*concrete.DirectedGraph)(nil)
+)
 
 // Tests Issue #27
 func TestEdgeOvercounting(t *testing.T) {
