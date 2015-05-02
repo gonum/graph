@@ -28,7 +28,7 @@ type johnson struct {
 }
 
 // CyclesIn returns the set of elementary cycles in the graph g.
-func CyclesIn(g graph.DirectedGraph) [][]graph.Node {
+func CyclesIn(g graph.Directed) [][]graph.Node {
 	jg := johnsonGraphFrom(g)
 	j := johnson{
 		adjacent: jg,
@@ -43,7 +43,7 @@ func CyclesIn(g graph.DirectedGraph) [][]graph.Node {
 		// A_k = adjacency structure of strong component K with least
 		//       vertex in subgraph of G induced by {s, s+1, ... ,n}.
 		j.adjacent = j.adjacent.sccSubGraph(sccs, 2) // Only allow SCCs with >= 2 vertices.
-		if j.adjacent.order() == 0 {
+		if j.adjacent.Order() == 0 {
 			break
 		}
 
@@ -130,8 +130,8 @@ type johnsonGraph struct {
 }
 
 // johnsonGraphFrom returns a deep copy of the graph g.
-func johnsonGraphFrom(g graph.DirectedGraph) johnsonGraph {
-	nodes := g.NodeList()
+func johnsonGraphFrom(g graph.Directed) johnsonGraph {
+	nodes := g.Nodes()
 	sort.Sort(byID(nodes))
 	c := johnsonGraph{
 		orig:  nodes,
@@ -142,7 +142,7 @@ func johnsonGraphFrom(g graph.DirectedGraph) johnsonGraph {
 	}
 	for i, u := range nodes {
 		c.index[u.ID()] = i
-		for _, v := range g.Successors(u) {
+		for _, v := range g.From(u) {
 			if c.succ[u.ID()] == nil {
 				c.succ[u.ID()] = make(internal.IntSet)
 				c.nodes.Add(u.ID())
@@ -159,9 +159,6 @@ type byID []graph.Node
 func (n byID) Len() int           { return len(n) }
 func (n byID) Less(i, j int) bool { return n[i].ID() < n[j].ID() }
 func (n byID) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
-
-// order returns the order of the graph.
-func (g johnsonGraph) order() int { return g.nodes.Count() }
 
 // indexOf returns the index of the retained node for the given node ID.
 func (g johnsonGraph) indexOf(id int) int {
@@ -242,8 +239,11 @@ func (g johnsonGraph) sccSubGraph(sccs [][]graph.Node, min int) johnsonGraph {
 	return sub
 }
 
-// NodeList is required to satisfy Tarjan.
-func (g johnsonGraph) NodeList() []graph.Node {
+// Order returns the order of the graph.
+func (g johnsonGraph) Order() int { return g.nodes.Count() }
+
+// Nodes is required to satisfy Tarjan.
+func (g johnsonGraph) Nodes() []graph.Node {
 	n := make([]graph.Node, 0, len(g.nodes))
 	for id := range g.nodes {
 		n = append(n, johnsonGraphNode(id))
@@ -251,8 +251,8 @@ func (g johnsonGraph) NodeList() []graph.Node {
 	return n
 }
 
-// Successors is required to satisfy Tarjan.
-func (g johnsonGraph) Successors(n graph.Node) []graph.Node {
+// From is required to satisfy Tarjan.
+func (g johnsonGraph) From(n graph.Node) []graph.Node {
 	adj := g.succ[n.ID()]
 	if len(adj) == 0 {
 		return nil
@@ -267,11 +267,11 @@ func (g johnsonGraph) Successors(n graph.Node) []graph.Node {
 // The following methods are purely here to satisfy graph.DirectedGraph.
 // Use of this type for anything except Tarjan or CyclesIn is likely to result in
 // incorrect results.
-func (johnsonGraph) NodeExists(n graph.Node) bool           { return false }
-func (johnsonGraph) Neighbors(n graph.Node) []graph.Node    { return nil }
+func (johnsonGraph) Has(n graph.Node) bool                  { return false }
+func (johnsonGraph) HasEdge(u, v graph.Node) bool           { return false }
 func (johnsonGraph) EdgeBetween(u, v graph.Node) graph.Edge { return nil }
-func (johnsonGraph) EdgeTo(u, v graph.Node) graph.Edge      { return nil }
-func (johnsonGraph) Predecessors(v graph.Node) []graph.Node { return nil }
+func (johnsonGraph) EdgeFromTo(u, v graph.Node) graph.Edge  { return nil }
+func (johnsonGraph) To(v graph.Node) []graph.Node           { return nil }
 
 type johnsonGraphEdge struct{ u, v johnsonGraphNode }
 
