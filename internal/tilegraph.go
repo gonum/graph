@@ -255,7 +255,7 @@ func (g *TileGraph) Nodes() []graph.Node {
 }
 
 func (g *TileGraph) Cost(e graph.Edge) float64 {
-	if edge := g.EdgeBetween(e.Head(), e.Tail()); edge != nil {
+	if edge := g.EdgeBetween(e.From(), e.To()); edge != nil {
 		return 1
 	}
 

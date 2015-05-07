@@ -213,9 +213,9 @@ type costEdgeList interface {
 func monotonic(g costEdgeList, heur func(n1, n2 graph.Node) float64) (bool, graph.Edge, graph.Node) {
 	for _, goal := range g.Nodes() {
 		for _, edge := range g.Edges() {
-			head := edge.Head()
-			tail := edge.Tail()
-			if heur(head, goal) > g.Cost(edge)+heur(tail, goal) {
+			from := edge.From()
+			to := edge.To()
+			if heur(from, goal) > g.Cost(edge)+heur(to, goal) {
 				return false, edge, goal
 			}
 		}
@@ -383,7 +383,7 @@ func TestTarjanSCC(t *testing.T) {
 				if !g.Has(concrete.Node(v)) {
 					g.AddNode(concrete.Node(v))
 				}
-				g.AddDirectedEdge(concrete.Edge{H: concrete.Node(u), T: concrete.Node(v)}, 0)
+				g.AddDirectedEdge(concrete.Edge{F: concrete.Node(u), T: concrete.Node(v)}, 0)
 			}
 		}
 		gotSCCs := search.TarjanSCC(g)
@@ -481,7 +481,7 @@ func TestVertexOrdering(t *testing.T) {
 				if !g.Has(concrete.Node(v)) {
 					g.AddNode(concrete.Node(v))
 				}
-				g.AddUndirectedEdge(concrete.Edge{H: concrete.Node(u), T: concrete.Node(v)}, 0)
+				g.AddUndirectedEdge(concrete.Edge{F: concrete.Node(u), T: concrete.Node(v)}, 0)
 			}
 		}
 		order, core := search.VertexOrdering(g)
@@ -568,7 +568,7 @@ func TestBronKerbosch(t *testing.T) {
 				if !g.Has(concrete.Node(v)) {
 					g.AddNode(concrete.Node(v))
 				}
-				g.AddUndirectedEdge(concrete.Edge{H: concrete.Node(u), T: concrete.Node(v)}, 0)
+				g.AddUndirectedEdge(concrete.Edge{F: concrete.Node(u), T: concrete.Node(v)}, 0)
 			}
 		}
 		cliques := search.BronKerbosch(g)
@@ -614,7 +614,7 @@ func TestConnectedComponents(t *testing.T) {
 				if !g.Has(concrete.Node(v)) {
 					g.AddNode(concrete.Node(v))
 				}
-				g.AddUndirectedEdge(concrete.Edge{H: concrete.Node(u), T: concrete.Node(v)}, 0)
+				g.AddUndirectedEdge(concrete.Edge{F: concrete.Node(u), T: concrete.Node(v)}, 0)
 			}
 		}
 		cc := search.ConnectedComponents(g)

@@ -47,8 +47,8 @@ type edge struct {
 	u, v graph.Node
 }
 
-func (e edge) Head() graph.Node { return e.u }
-func (e edge) Tail() graph.Node { return e.v }
+func (e edge) From() graph.Node { return e.u }
+func (e edge) To() graph.Node   { return e.v }
 
 // Sets up the cost functions and successor functions so I don't have to do a type switch every
 // time. This almost always does more work than is necessary, but since it's only executed once

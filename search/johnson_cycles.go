@@ -273,11 +273,6 @@ func (johnsonGraph) EdgeBetween(u, v graph.Node) graph.Edge { return nil }
 func (johnsonGraph) EdgeFromTo(u, v graph.Node) graph.Edge  { return nil }
 func (johnsonGraph) To(v graph.Node) []graph.Node           { return nil }
 
-type johnsonGraphEdge struct{ u, v johnsonGraphNode }
-
-func (e johnsonGraphEdge) Head() graph.Node { return e.u }
-func (e johnsonGraphEdge) Tail() graph.Node { return e.v }
-
 type johnsonGraphNode int
 
 func (n johnsonGraphNode) ID() int { return int(n) }

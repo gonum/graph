@@ -14,11 +14,11 @@ type Node interface {
 }
 
 // Allows edges to do something more interesting that just be a group of nodes. While the methods
-// are called Head and Tail, they are not considered directed unless the given interface specifies
+// are called From and To, they are not considered directed unless the given interface specifies
 // otherwise.
 type Edge interface {
-	Head() Node
-	Tail() Node
+	From() Node
+	To() Node
 }
 
 // A Graph implements the behavior of a graph.
@@ -49,12 +49,12 @@ type Undirected interface {
 	Graph
 
 	// EdgeBetween returns the edge between node u and v such that
-	// Head is one argument and Tail is the other. If no
+	// From is one argument and To is the other. If no
 	// such edge exists, this function returns nil.
 	EdgeBetween(u, v Node) Edge
 }
 
-// Directed graphs are characterized by having seperable Heads and Tails in their edges.
+// Directed graphs are characterized by having separable heads and tails in their edges.
 // That is, if node1 goes to node2, that does not necessarily imply that node2 goes to node1.
 //
 // While it's possible for a directed graph to have fully reciprocal edges (i.e. the graph is
@@ -68,7 +68,7 @@ type Directed interface {
 	To(Node) []Node
 
 	// EdgeFromTo returns an edge between node u and v such that
-	// Head is one argument and Tail is the other. If no
+	// From is one argument and To is the other. If no
 	// such edge exists, this function returns nil.
 	EdgeFromTo(u, v Node) Edge
 }
@@ -156,11 +156,11 @@ type Mutable interface {
 // store a Node argument -- any retrieval call is required to return the exact supplied edge.
 // This is what makes it incompatible with Directed.
 //
-// The reasoning is this: if you call AddUndirectedEdge(Edge{head,tail}); you are required
+// The reasoning is this: if you call AddUndirectedEdge(Edge{from,to}); you are required
 // to return the exact edge passed in when a retrieval method (EdgeTo/EdgeBetween) is called.
-// If I call EdgeTo(tail,head), this means that since the edge exists, and was added as
-// Edge{head,tail} this function MUST return Edge{head,tail}. However, EdgeTo requires this
-// be returned as Edge{tail,head}. Thus there's a conflict that cannot be resolved between the
+// If I call EdgeTo(to,from), this means that since the edge exists, and was added as
+// Edge{from,to} this function MUST return Edge{from,to}. However, EdgeTo requires this
+// be returned as Edge{to,from}. Thus there's a conflict that cannot be resolved between the
 // two interface requirements.
 type MutableUndirected interface {
 	CostGraph
@@ -168,8 +168,8 @@ type MutableUndirected interface {
 
 	// Like EdgeBetween in Graph, AddUndirectedEdge adds an edge between two nodes.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
-	// if the nodes already exist it should NOT replace existing nodes with e.Head() or
-	// e.Tail(). Overwriting nodes should explicitly be done with another call to AddNode()
+	// if the nodes already exist it should NOT replace existing nodes with e.From() or
+	// e.To(). Overwriting nodes should explicitly be done with another call to AddNode()
 	AddUndirectedEdge(e Edge, cost float64)
 
 	// RemoveEdge clears the stored edge between two nodes. Calling this will never
@@ -186,13 +186,13 @@ type MutableDirected interface {
 	CostDirected
 	Mutable
 
-	// Like EdgeTo in Directed, AddDirectedEdge adds an edge FROM head TO tail.
+	// Like EdgeTo in Directed, AddDirectedEdge adds an edge with the given direction.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
-	// if the nodes already exist it should NOT replace existing nodes with e.Head() or
-	// e.Tail(). Overwriting nodes should explicitly be done with another call to AddNode()
+	// if the nodes already exist it should NOT replace existing nodes with e.From() or
+	// e.To(). Overwriting nodes should explicitly be done with another call to AddNode()
 	AddDirectedEdge(e Edge, cost float64)
 
-	// Removes an edge FROM e.Head TO e.Tail. If no such edge exists, this is a no-op,
+	// Removes an edge FROM e.From TO e.To. If no such edge exists, this is a no-op,
 	// not an error.
 	RemoveDirectedEdge(Edge)
 }

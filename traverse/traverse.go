@@ -215,5 +215,5 @@ type edge struct {
 	u, v graph.Node
 }
 
-func (e edge) Head() graph.Node { return e.u }
-func (e edge) Tail() graph.Node { return e.v }
+func (e edge) From() graph.Node { return e.u }
+func (e edge) To() graph.Node   { return e.v }
