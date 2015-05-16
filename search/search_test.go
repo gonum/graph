@@ -376,7 +376,7 @@ func TestTarjanSCC(t *testing.T) {
 	for i, test := range tarjanTests {
 		g := concrete.NewDirectedGraph()
 		for u, e := range test.g {
-			if !g.NodeExists(concrete.Node(u)) {
+			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))
 			}
 			for v := range e {

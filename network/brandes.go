@@ -10,7 +10,7 @@ import (
 )
 
 // Betweenness returns the betweenness centrality for nodes in the unweighted graph g.
-func Betweenness(g graph.Graph) map[int]float64 {
+func Betweenness(g graph.Undirected) map[int]float64 {
 	// Brandes' algorithm for finding betweenness centrality for nodes in
 	// and unweighted graph:
 	//
@@ -24,7 +24,7 @@ func Betweenness(g graph.Graph) map[int]float64 {
 	// Also note special case for sparse networks:
 	// http://wwwold.iit.cnr.it/staff/marco.pellegrini/papiri/asonam-final.pdf
 
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 	cb := make(map[int]float64, len(nodes))
 	for _, n := range nodes {
 		cb[n.ID()] = 0
@@ -56,7 +56,7 @@ func Betweenness(g graph.Graph) map[int]float64 {
 		for queue.Len() != 0 {
 			v := queue.Dequeue()
 			stack.Push(v)
-			for _, w := range g.Neighbors(v) {
+			for _, w := range g.From(v) {
 				// w found for the first time?
 				if d[w.ID()] < 0 {
 					queue.Enqueue(w)
