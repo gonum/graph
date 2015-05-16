@@ -7,6 +7,7 @@ package search
 import (
 	"container/heap"
 	"errors"
+	"math"
 	"sort"
 
 	"github.com/gonum/graph"
@@ -228,7 +229,7 @@ func Johnson(g graph.Graph, weight graph.WeightFunc) (nodePaths map[int]map[int]
 	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
 
 	/* Copy graph into a mutable one since it has to be altered for this algorithm */
-	dummyGraph := concrete.NewDirectedGraph()
+	dummyGraph := concrete.NewDirectedGraph(math.Inf(1))
 	for _, node := range g.Nodes() {
 		neighbors := from(node)
 		dummyGraph.Has(node)

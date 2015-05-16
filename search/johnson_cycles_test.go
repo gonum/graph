@@ -5,6 +5,7 @@
 package search_test
 
 import (
+	"math"
 	"reflect"
 	"sort"
 	"testing"
@@ -86,7 +87,7 @@ var cyclesInTests = []struct {
 
 func TestCyclesIn(t *testing.T) {
 	for i, test := range cyclesInTests {
-		g := concrete.NewDirectedGraph()
+		g := concrete.NewDirectedGraph(math.Inf(1))
 		g.AddNode(concrete.Node(-10)) // Make sure we test graphs with sparse IDs.
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {

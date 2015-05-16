@@ -81,7 +81,7 @@ var pageRankTests = []struct {
 
 func TestPageRank(t *testing.T) {
 	for i, test := range pageRankTests {
-		g := concrete.NewDirectedGraph()
+		g := concrete.NewDirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))
@@ -107,7 +107,7 @@ func TestPageRank(t *testing.T) {
 
 func TestPageRankSparse(t *testing.T) {
 	for i, test := range pageRankTests {
-		g := concrete.NewDirectedGraph()
+		g := concrete.NewDirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))

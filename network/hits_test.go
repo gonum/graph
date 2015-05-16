@@ -43,7 +43,7 @@ var hitsTests = []struct {
 
 func TestHITS(t *testing.T) {
 	for i, test := range hitsTests {
-		g := concrete.NewDirectedGraph()
+		g := concrete.NewDirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))

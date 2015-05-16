@@ -127,7 +127,7 @@ func TestNoPathAStar(t *testing.T) {
 }
 
 func TestSmallAStar(t *testing.T) {
-	gg := newSmallGonumGraph()
+	gg := newSmallUndirected()
 	heur := newSmallHeuristic()
 	if ok, edge, goal := monotonic(gg, heur); !ok {
 		t.Fatalf("non-monotonic heuristic.  edge: %v goal: %v", edge, goal)
@@ -148,7 +148,7 @@ func TestSmallAStar(t *testing.T) {
 }
 
 func ExampleBreadthFirstSearch() {
-	g := concrete.NewDirectedGraph()
+	g := concrete.NewDirectedGraph(math.Inf(1))
 	var n0, n1, n2, n3 concrete.Node = 0, 1, 2, 3
 	g.AddDirectedEdge(concrete.Edge{n0, n1}, 1)
 	g.AddDirectedEdge(concrete.Edge{n0, n2}, 1)
@@ -161,7 +161,7 @@ func ExampleBreadthFirstSearch() {
 	// nodes visited: 4
 }
 
-func newSmallGonumGraph() *concrete.Graph {
+func newSmallUndirected() *concrete.UndirectedGraph {
 	eds := []struct{ n1, n2, edgeCost int }{
 		{1, 2, 7},
 		{1, 3, 9},
@@ -173,7 +173,7 @@ func newSmallGonumGraph() *concrete.Graph {
 		{4, 5, 7},
 		{5, 6, 9},
 	}
-	g := concrete.NewGraph()
+	g := concrete.NewUndirectedGraph(math.Inf(1))
 	for n := concrete.Node(1); n <= 6; n++ {
 		g.AddNode(n)
 	}
@@ -225,7 +225,7 @@ func monotonic(g weightedEdgeList, heur func(n1, n2 graph.Node) float64) (bool, 
 
 // Test for correct result on a small graph easily solvable by hand
 func TestDijkstraSmall(t *testing.T) {
-	g := newSmallGonumGraph()
+	g := newSmallUndirected()
 	paths, lens := search.Dijkstra(concrete.Node(1), g, nil)
 	s := fmt.Sprintln(len(paths), len(lens))
 	for i := 1; i <= 6; i++ {
@@ -244,7 +244,7 @@ func TestDijkstraSmall(t *testing.T) {
 }
 
 func TestIsPath(t *testing.T) {
-	dg := concrete.NewDirectedGraph()
+	dg := concrete.NewDirectedGraph(math.Inf(1))
 	if !search.IsPath(nil, dg) {
 		t.Error("IsPath returns false on nil path")
 	}
@@ -274,7 +274,7 @@ func TestIsPath(t *testing.T) {
 	if !search.IsPath(p, dg) {
 		t.Error("IsPath does not find a correct path for path > 2 nodes")
 	}
-	ug := concrete.NewGraph()
+	ug := concrete.NewUndirectedGraph(math.Inf(1))
 	ug.AddUndirectedEdge(concrete.Edge{p[1], p[0]}, 1)
 	ug.AddUndirectedEdge(concrete.Edge{p[1], p[2]}, 1)
 	if !search.IsPath(p, ug) {
@@ -374,7 +374,7 @@ var tarjanTests = []struct {
 
 func TestTarjanSCC(t *testing.T) {
 	for i, test := range tarjanTests {
-		g := concrete.NewDirectedGraph()
+		g := concrete.NewDirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))
@@ -472,7 +472,7 @@ var vOrderTests = []struct {
 
 func TestVertexOrdering(t *testing.T) {
 	for i, test := range vOrderTests {
-		g := concrete.NewGraph()
+		g := concrete.NewUndirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))
@@ -559,7 +559,7 @@ var bronKerboschTests = []struct {
 
 func TestBronKerbosch(t *testing.T) {
 	for i, test := range bronKerboschTests {
-		g := concrete.NewGraph()
+		g := concrete.NewUndirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))
@@ -604,7 +604,7 @@ var connectedComponentTests = []struct {
 
 func TestConnectedComponents(t *testing.T) {
 	for i, test := range connectedComponentTests {
-		g := concrete.NewGraph()
+		g := concrete.NewUndirectedGraph(math.Inf(1))
 
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {

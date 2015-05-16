@@ -5,6 +5,7 @@
 package concrete_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/gonum/graph"
@@ -34,7 +35,7 @@ func generateDummyGraph() *concrete.DirectedGraph {
 		{0, 2},
 	}
 
-	g := concrete.NewDirectedGraph()
+	g := concrete.NewDirectedGraph(math.Inf(1))
 
 	for _, n := range nodes {
 		g.AddDirectedEdge(concrete.Edge{concrete.Node(n.srcId), concrete.Node(n.targetId)}, 1)

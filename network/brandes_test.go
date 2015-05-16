@@ -140,7 +140,7 @@ var betweennessTests = []struct {
 
 func TestBetweenness(t *testing.T) {
 	for i, test := range betweennessTests {
-		g := concrete.NewGraph()
+		g := concrete.NewUndirectedGraph(math.Inf(1))
 		for u, e := range test.g {
 			if !g.Has(concrete.Node(u)) {
 				g.AddNode(concrete.Node(u))

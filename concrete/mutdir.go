@@ -13,6 +13,8 @@ import (
 // In most cases it's likely more desireable to use a graph specific to your
 // problem domain.
 type DirectedGraph struct {
+	absent float64
+
 	successors   map[int]map[int]WeightedEdge
 	predecessors map[int]map[int]WeightedEdge
 	nodeMap      map[int]graph.Node
@@ -22,8 +24,9 @@ type DirectedGraph struct {
 	freeMap map[int]struct{}
 }
 
-func NewDirectedGraph() *DirectedGraph {
+func NewDirectedGraph(absent float64) *DirectedGraph {
 	return &DirectedGraph{
+		absent:       absent,
 		successors:   make(map[int]map[int]WeightedEdge),
 		predecessors: make(map[int]map[int]WeightedEdge),
 		nodeMap:      make(map[int]graph.Node),
@@ -228,7 +231,7 @@ func (g *DirectedGraph) Weight(e graph.Edge) float64 {
 			return we.Weight
 		}
 	}
-	return inf
+	return g.absent
 }
 
 func (g *DirectedGraph) EdgeList() []graph.Edge {

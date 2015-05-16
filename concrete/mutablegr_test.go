@@ -5,6 +5,7 @@
 package concrete_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/gonum/graph"
@@ -12,19 +13,19 @@ import (
 )
 
 var (
-	_ graph.Graph      = (*concrete.Graph)(nil)
-	_ graph.Undirected = (*concrete.Graph)(nil)
+	_ graph.Graph      = (*concrete.UndirectedGraph)(nil)
+	_ graph.Undirected = (*concrete.UndirectedGraph)(nil)
 )
 
 func TestAssertMutableNotDirected(t *testing.T) {
-	var g graph.MutableUndirected = concrete.NewGraph()
+	var g graph.MutableUndirected = concrete.NewUndirectedGraph(math.Inf(1))
 	if _, ok := g.(graph.Directed); ok {
-		t.Fatal("concrete.Graph is directed, but a MutableGraph cannot safely be directed!")
+		t.Fatal("concrete.UndirectedGraph is directed, but a MutableGraph cannot safely be directed!")
 	}
 }
 
 func TestMaxID(t *testing.T) {
-	g := concrete.NewGraph()
+	g := concrete.NewUndirectedGraph(math.Inf(1))
 	nodes := make(map[graph.Node]struct{})
 	for i := concrete.Node(0); i < 3; i++ {
 		g.AddNode(i)

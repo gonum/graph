@@ -33,8 +33,7 @@ type WeightedEdge struct {
 	Weight float64
 }
 
-// A GonumGraph is a very generalized graph that can handle an arbitrary number of vertices and
-// edges -- as well as act as either directed or undirected.
+// Undirected graph that can handle an arbitrary number of vertices and edges.
 //
 // Internally, it uses a map of successors AND predecessors, to speed up some operations (such as
 // getting all successors/predecessors). It also speeds up things like adding edges (assuming both
@@ -42,9 +41,11 @@ type WeightedEdge struct {
 //
 // However, its generality is also its weakness (and partially a flaw in needing to satisfy
 // MutableGraph). For most purposes, creating your own graph is probably better. For instance,
-// see TileGraph for an example of an immutable 2D grid of tiles that also implements the Graph
+// see TileGraph for an example of an immutable 2D grid of tiles that also implements the UndirectedGraph
 // interface, but would be more suitable if all you needed was a simple undirected 2D grid.
-type Graph struct {
+type UndirectedGraph struct {
+	absent float64
+
 	neighbors map[int]map[int]WeightedEdge
 	nodeMap   map[int]graph.Node
 
@@ -53,8 +54,10 @@ type Graph struct {
 	freeMap map[int]struct{}
 }
 
-func NewGraph() *Graph {
-	return &Graph{
+func NewUndirectedGraph(absent float64) *UndirectedGraph {
+	return &UndirectedGraph{
+		absent: absent,
+
 		neighbors: make(map[int]map[int]WeightedEdge),
 		nodeMap:   make(map[int]graph.Node),
 		maxID:     0,
@@ -64,7 +67,7 @@ func NewGraph() *Graph {
 
 /* Mutable implementation */
 
-func (g *Graph) NewNode() graph.Node {
+func (g *UndirectedGraph) NewNode() graph.Node {
 	if g.maxID != maxInt {
 		g.maxID++
 		return Node(g.maxID)
@@ -90,7 +93,7 @@ func (g *Graph) NewNode() graph.Node {
 	panic("cannot allocate node id: no free id found")
 }
 
-func (g *Graph) AddNode(n graph.Node) {
+func (g *UndirectedGraph) AddNode(n graph.Node) {
 	g.nodeMap[n.ID()] = n
 	g.neighbors[n.ID()] = make(map[int]WeightedEdge)
 
@@ -98,7 +101,7 @@ func (g *Graph) AddNode(n graph.Node) {
 	g.maxID = max(g.maxID, n.ID())
 }
 
-func (g *Graph) AddUndirectedEdge(e graph.Edge, weight float64) {
+func (g *UndirectedGraph) AddUndirectedEdge(e graph.Edge, weight float64) {
 	from, to := e.From(), e.To()
 	if !g.Has(from) {
 		g.AddNode(from)
@@ -112,7 +115,7 @@ func (g *Graph) AddUndirectedEdge(e graph.Edge, weight float64) {
 	g.neighbors[to.ID()][from.ID()] = WeightedEdge{Edge: e, Weight: weight}
 }
 
-func (g *Graph) RemoveNode(n graph.Node) {
+func (g *UndirectedGraph) RemoveNode(n graph.Node) {
 	if _, ok := g.nodeMap[n.ID()]; !ok {
 		return
 	}
@@ -129,7 +132,7 @@ func (g *Graph) RemoveNode(n graph.Node) {
 	g.freeMap[n.ID()] = struct{}{}
 }
 
-func (g *Graph) RemoveUndirectedEdge(e graph.Edge) {
+func (g *UndirectedGraph) RemoveUndirectedEdge(e graph.Edge) {
 	from, to := e.From(), e.To()
 	if _, ok := g.nodeMap[from.ID()]; !ok {
 		return
@@ -141,14 +144,14 @@ func (g *Graph) RemoveUndirectedEdge(e graph.Edge) {
 	delete(g.neighbors[to.ID()], from.ID())
 }
 
-func (g *Graph) EmptyGraph() {
+func (g *UndirectedGraph) EmptyGraph() {
 	g.neighbors = make(map[int]map[int]WeightedEdge)
 	g.nodeMap = make(map[int]graph.Node)
 }
 
-/* Graph implementation */
+/* UndirectedGraph implementation */
 
-func (g *Graph) From(n graph.Node) []graph.Node {
+func (g *UndirectedGraph) From(n graph.Node) []graph.Node {
 	if !g.Has(n) {
 		return nil
 	}
@@ -163,12 +166,12 @@ func (g *Graph) From(n graph.Node) []graph.Node {
 	return neighbors
 }
 
-func (g *Graph) HasEdge(n, neigh graph.Node) bool {
+func (g *UndirectedGraph) HasEdge(n, neigh graph.Node) bool {
 	_, ok := g.neighbors[n.ID()][neigh.ID()]
 	return ok
 }
 
-func (g *Graph) EdgeBetween(n, neigh graph.Node) graph.Edge {
+func (g *UndirectedGraph) EdgeBetween(n, neigh graph.Node) graph.Edge {
 	// Don't need to check if neigh exists because
 	// it's implicit in the neighbors access.
 	if !g.Has(n) {
@@ -178,17 +181,17 @@ func (g *Graph) EdgeBetween(n, neigh graph.Node) graph.Edge {
 	return g.neighbors[n.ID()][neigh.ID()]
 }
 
-func (g *Graph) Has(n graph.Node) bool {
+func (g *UndirectedGraph) Has(n graph.Node) bool {
 	_, ok := g.nodeMap[n.ID()]
 
 	return ok
 }
 
-func (g *Graph) Order() int {
+func (g *UndirectedGraph) Order() int {
 	return len(g.nodeMap)
 }
 
-func (g *Graph) Nodes() []graph.Node {
+func (g *UndirectedGraph) Nodes() []graph.Node {
 	nodes := make([]graph.Node, len(g.nodeMap))
 	i := 0
 	for _, n := range g.nodeMap {
@@ -199,16 +202,16 @@ func (g *Graph) Nodes() []graph.Node {
 	return nodes
 }
 
-func (g *Graph) Weight(e graph.Edge) float64 {
+func (g *UndirectedGraph) Weight(e graph.Edge) float64 {
 	if n, ok := g.neighbors[e.From().ID()]; ok {
 		if we, ok := n[e.To().ID()]; ok {
 			return we.Weight
 		}
 	}
-	return inf
+	return g.absent
 }
 
-func (g *Graph) Edges() []graph.Edge {
+func (g *UndirectedGraph) Edges() []graph.Edge {
 	m := make(map[WeightedEdge]struct{})
 	toReturn := make([]graph.Edge, 0)
 
@@ -224,7 +227,7 @@ func (g *Graph) Edges() []graph.Edge {
 	return toReturn
 }
 
-func (g *Graph) Degree(n graph.Node) int {
+func (g *UndirectedGraph) Degree(n graph.Node) int {
 	if _, ok := g.nodeMap[n.ID()]; !ok {
 		return 0
 	}
