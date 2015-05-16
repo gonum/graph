@@ -43,8 +43,37 @@ import (
 // To run Breadth First Search, run A* with both the NullHeuristic and UniformCost (or any weight
 // function that returns a uniform positive value.)
 func AStar(start, goal graph.Node, g graph.Graph, weight graph.WeightFunc, heuristic graph.HeuristicWeightFunc) (path []graph.Node, pathCost float64, nodesExpanded int) {
-	sf := setupFuncs(g, weight, heuristic)
-	from, weight, heuristic, edgeTo := sf.from, sf.weight, sf.heuristic, sf.edgeTo
+	var (
+		from   = g.From
+		edgeTo func(graph.Node, graph.Node) graph.Edge
+	)
+	switch g := g.(type) {
+	case graph.Directed:
+		edgeTo = g.EdgeFromTo
+	case graph.Undirected:
+		edgeTo = g.EdgeBetween
+	default:
+		edgeTo = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
+	if weight == nil {
+		if g, ok := g.(graph.Weighter); ok {
+			weight = g.Weight
+		} else {
+			weight = graph.UniformCostWeight
+		}
+	}
+	if heuristic == nil {
+		if g, ok := g.(graph.HeuristicWeighter); ok {
+			heuristic = g.HeuristicWeight
+		} else {
+			heuristic = NullHeuristic
+		}
+	}
 
 	closedSet := make(map[int]internalNode)
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -107,9 +136,30 @@ func BreadthFirstSearch(start, goal graph.Node, g graph.Graph) ([]graph.Node, in
 // Dijkstra's algorithm usually only returns a weight map, however, since the data is available
 // this version will also reconstruct the path to every node.
 func Dijkstra(source graph.Node, g graph.Graph, weight graph.WeightFunc) (paths map[int][]graph.Node, costs map[int]float64) {
-
-	sf := setupFuncs(g, weight, nil)
-	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
+	var (
+		from   = g.From
+		edgeTo func(graph.Node, graph.Node) graph.Edge
+	)
+	switch g := g.(type) {
+	case graph.Directed:
+		edgeTo = g.EdgeFromTo
+	case graph.Undirected:
+		edgeTo = g.EdgeBetween
+	default:
+		edgeTo = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
+	if weight == nil {
+		if g, ok := g.(graph.Weighter); ok {
+			weight = g.Weight
+		} else {
+			weight = graph.UniformCostWeight
+		}
+	}
 
 	nodes := g.Nodes()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -162,8 +212,30 @@ func Dijkstra(source graph.Node, g graph.Graph, weight graph.WeightFunc) (paths 
 // you. In addition, it has a third return value which will be true if the algorithm was aborted
 // due to the presence of a negative edge weight cycle.
 func BellmanFord(source graph.Node, g graph.Graph, weight graph.WeightFunc) (paths map[int][]graph.Node, costs map[int]float64, err error) {
-	sf := setupFuncs(g, weight, nil)
-	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
+	var (
+		from   = g.From
+		edgeTo func(graph.Node, graph.Node) graph.Edge
+	)
+	switch g := g.(type) {
+	case graph.Directed:
+		edgeTo = g.EdgeFromTo
+	case graph.Undirected:
+		edgeTo = g.EdgeBetween
+	default:
+		edgeTo = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
+	if weight == nil {
+		if g, ok := g.(graph.Weighter); ok {
+			weight = g.Weight
+		} else {
+			weight = graph.UniformCostWeight
+		}
+	}
 
 	predecessor := make(map[int]graph.Node)
 	costs = make(map[int]float64)
@@ -223,8 +295,30 @@ func BellmanFord(source graph.Node, g graph.Graph, weight graph.WeightFunc) (pat
 // between them; and a bool that is true if Bellman-Ford detected a negative edge weight cycle --
 // thus causing it (and this algorithm) to abort (if aborted is true, both maps will be nil).
 func Johnson(g graph.Graph, weight graph.WeightFunc) (nodePaths map[int]map[int][]graph.Node, nodeCosts map[int]map[int]float64, err error) {
-	sf := setupFuncs(g, weight, nil)
-	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
+	var (
+		from   = g.From
+		edgeTo func(graph.Node, graph.Node) graph.Edge
+	)
+	switch g := g.(type) {
+	case graph.Directed:
+		edgeTo = g.EdgeFromTo
+	case graph.Undirected:
+		edgeTo = g.EdgeBetween
+	default:
+		edgeTo = func(u, v graph.Node) graph.Edge {
+			if g.HasEdge(u, v) {
+				return edge{u, v}
+			}
+			return nil
+		}
+	}
+	if weight == nil {
+		if g, ok := g.(graph.Weighter); ok {
+			weight = g.Weight
+		} else {
+			weight = graph.UniformCostWeight
+		}
+	}
 
 	/* Copy graph into a mutable one since it has to be altered for this algorithm */
 	dummyGraph := concrete.NewDirectedGraph(math.Inf(1))
@@ -285,9 +379,6 @@ func Johnson(g graph.Graph, weight graph.WeightFunc) (nodePaths map[int]map[int]
 // guaranteed to find the shortest path, however, if a path exists DFS is guaranteed to find it
 // (provided you don't find a way to implement a Graph with an infinite depth.)
 func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
-	sf := setupFuncs(g, nil, nil)
-	from := sf.from
-
 	closedSet := make(internal.IntSet)
 	predecessor := make(map[int]graph.Node)
 
@@ -305,7 +396,7 @@ func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
 
 		closedSet.Add(curr.ID())
 
-		for _, neighbor := range from(curr) {
+		for _, neighbor := range g.From(curr) {
 			if closedSet.Has(neighbor.ID()) {
 				continue
 			}
@@ -373,7 +464,13 @@ func Dominators(start graph.Node, g graph.Graph) map[int]internal.Set {
 		allNodes.Add(node)
 	}
 
-	to := setupFuncs(g, nil, nil).to
+	var to func(graph.Node) []graph.Node
+	switch g := g.(type) {
+	case graph.Directed:
+		to = g.To
+	default:
+		to = g.From
+	}
 
 	for _, node := range nlist {
 		dominators[node.ID()] = make(internal.Set)
@@ -418,8 +515,6 @@ func Dominators(start graph.Node, g graph.Graph) map[int]internal.Set {
 // This returns all possible post-dominators for all nodes, it does not prune for strict
 // postdominators, immediate postdominators etc.
 func PostDominators(end graph.Node, g graph.Graph) map[int]internal.Set {
-	from := setupFuncs(g, nil, nil).from
-
 	allNodes := make(internal.Set)
 	nlist := g.Nodes()
 	dominators := make(map[int]internal.Set, len(nlist))
@@ -442,7 +537,7 @@ func PostDominators(end graph.Node, g graph.Graph) map[int]internal.Set {
 			if node.ID() == end.ID() {
 				continue
 			}
-			succs := from(node)
+			succs := g.From(node)
 			if len(succs) == 0 {
 				continue
 			}
