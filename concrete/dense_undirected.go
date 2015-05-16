@@ -12,22 +12,23 @@ import (
 // UndirectedDenseGraph represents a graph such that all IDs are in a contiguous
 // block from 0 to n-1.
 type UndirectedDenseGraph struct {
-	mat *mat64.SymDense
+	absent float64
+	mat    *mat64.SymDense
 }
 
 // NewUndirectedDenseGraph creates an undirected dense graph with n nodes.
 // If passable is true all nodes will have an edge with unit cost, otherwise
 // every node will start unconnected (cost of +Inf).
-func NewUndirectedDenseGraph(n int, passable bool) *UndirectedDenseGraph {
+func NewUndirectedDenseGraph(n int, passable bool, absent float64) *UndirectedDenseGraph {
 	mat := make([]float64, n*n)
 	v := 1.
 	if !passable {
-		v = inf
+		v = absent
 	}
 	for i := range mat {
 		mat[i] = v
 	}
-	return &UndirectedDenseGraph{mat64.NewSymDense(n, mat)}
+	return &UndirectedDenseGraph{mat: mat64.NewSymDense(n, mat), absent: absent}
 }
 
 func (g *UndirectedDenseGraph) Has(n graph.Node) bool {
@@ -53,12 +54,12 @@ func (g *UndirectedDenseGraph) Nodes() []graph.Node {
 func (g *UndirectedDenseGraph) Degree(n graph.Node) int {
 	id := n.ID()
 	var deg int
-	if g.mat.At(id, id) != inf {
+	if !isSame(g.mat.At(id, id), g.absent) {
 		deg = 1
 	}
 	r := g.mat.Symmetric()
 	for i := 0; i < r; i++ {
-		if g.mat.At(id, i) != inf {
+		if !isSame(g.mat.At(id, i), g.absent) {
 			deg++
 		}
 	}
@@ -70,7 +71,7 @@ func (g *UndirectedDenseGraph) From(n graph.Node) []graph.Node {
 	id := n.ID()
 	r := g.mat.Symmetric()
 	for i := 0; i < r; i++ {
-		if g.mat.At(id, i) != inf {
+		if !isSame(g.mat.At(id, i), g.absent) {
 			neighbors = append(neighbors, Node(i))
 		}
 	}
@@ -78,7 +79,7 @@ func (g *UndirectedDenseGraph) From(n graph.Node) []graph.Node {
 }
 
 func (g *UndirectedDenseGraph) HasEdge(n, neighbor graph.Node) bool {
-	return g.mat.At(n.ID(), neighbor.ID()) != inf
+	return !isSame(g.mat.At(n.ID(), neighbor.ID()), g.absent)
 }
 
 func (g *UndirectedDenseGraph) EdgeBetween(n, neighbor graph.Node) graph.Edge {
@@ -97,7 +98,7 @@ func (g *UndirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64) {
 }
 
 func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge) {
-	g.mat.SetSym(e.From().ID(), e.To().ID(), inf)
+	g.mat.SetSym(e.From().ID(), e.To().ID(), g.absent)
 }
 
 func (g *UndirectedDenseGraph) Matrix() *mat64.SymDense {

@@ -19,7 +19,7 @@ var (
 )
 
 func TestBasicDenseImpassable(t *testing.T) {
-	dg := concrete.NewUndirectedDenseGraph(5, false)
+	dg := concrete.NewUndirectedDenseGraph(5, false, math.Inf(1))
 	if dg == nil {
 		t.Fatal("Directed graph could not be made")
 	}
@@ -42,7 +42,7 @@ func TestBasicDenseImpassable(t *testing.T) {
 }
 
 func TestBasicDensePassable(t *testing.T) {
-	dg := concrete.NewUndirectedDenseGraph(5, true)
+	dg := concrete.NewUndirectedDenseGraph(5, true, math.Inf(1))
 	if dg == nil {
 		t.Fatal("Directed graph could not be made")
 	}
@@ -65,7 +65,7 @@ func TestBasicDensePassable(t *testing.T) {
 }
 
 func TestDirectedDenseAddRemove(t *testing.T) {
-	dg := concrete.NewDirectedDenseGraph(10, false)
+	dg := concrete.NewDirectedDenseGraph(10, false, math.Inf(1))
 	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1)
 
 	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
@@ -94,7 +94,7 @@ func TestDirectedDenseAddRemove(t *testing.T) {
 }
 
 func TestUndirectedDenseAddRemove(t *testing.T) {
-	dg := concrete.NewUndirectedDenseGraph(10, false)
+	dg := concrete.NewUndirectedDenseGraph(10, false, math.Inf(1))
 	dg.SetEdgeCost(concrete.Edge{concrete.Node(0), concrete.Node(2)}, 1)
 
 	if neighbors := dg.From(concrete.Node(0)); len(neighbors) != 1 || neighbors[0].ID() != 2 ||
@@ -123,7 +123,7 @@ func (ns nodeSorter) Less(i, j int) bool {
 }
 
 func TestDenseLists(t *testing.T) {
-	dg := concrete.NewDirectedDenseGraph(15, true)
+	dg := concrete.NewDirectedDenseGraph(15, true, math.Inf(1))
 	nodes := nodeSorter(dg.Nodes())
 
 	if len(nodes) != 15 {

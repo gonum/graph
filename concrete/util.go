@@ -37,3 +37,7 @@ func max(a, b int) int {
 	}
 	return b
 }
+
+func isSame(a, b float64) bool {
+	return a == b || (math.IsNaN(a) && math.IsNaN(b))
+}

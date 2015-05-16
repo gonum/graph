@@ -12,22 +12,23 @@ import (
 // DirectedDenseGraph represents a graph such that all IDs are in a contiguous
 // block from 0 to n-1.
 type DirectedDenseGraph struct {
-	mat *mat64.Dense
+	absent float64
+	mat    *mat64.Dense
 }
 
 // NewDirectedDenseGraph creates a directed dense graph with n nodes.
 // If passable is true all nodes will have an edge with unit cost, otherwise
 // every node will start unconnected (cost of +Inf).
-func NewDirectedDenseGraph(n int, passable bool) *DirectedDenseGraph {
+func NewDirectedDenseGraph(n int, passable bool, absent float64) *DirectedDenseGraph {
 	mat := make([]float64, n*n)
 	v := 1.
 	if !passable {
-		v = inf
+		v = absent
 	}
 	for i := range mat {
 		mat[i] = v
 	}
-	return &DirectedDenseGraph{mat64.NewDense(n, n, mat)}
+	return &DirectedDenseGraph{mat: mat64.NewDense(n, n, mat), absent: absent}
 }
 
 func (g *DirectedDenseGraph) Has(n graph.Node) bool {
@@ -55,7 +56,7 @@ func (g *DirectedDenseGraph) DirectedEdgeList() []graph.Edge {
 	r, _ := g.mat.Dims()
 	for i := 0; i < r; i++ {
 		for j := 0; j < r; j++ {
-			if g.mat.At(i, j) != inf {
+			if !isSame(g.mat.At(i, j), g.absent) {
 				edges = append(edges, Edge{Node(i), Node(j)})
 			}
 		}
@@ -66,10 +67,10 @@ func (g *DirectedDenseGraph) DirectedEdgeList() []graph.Edge {
 func (g *DirectedDenseGraph) From(n graph.Node) []graph.Node {
 	var neighbors []graph.Node
 	id := n.ID()
-	r, _ := g.mat.Dims()
-	for i := 0; i < r; i++ {
-		if g.mat.At(id, i) != inf {
-			neighbors = append(neighbors, Node(i))
+	_, c := g.mat.Dims()
+	for j := 0; j < c; j++ {
+		if !isSame(g.mat.At(id, j), g.absent) {
+			neighbors = append(neighbors, Node(j))
 		}
 	}
 	return neighbors
@@ -80,7 +81,7 @@ func (g *DirectedDenseGraph) To(n graph.Node) []graph.Node {
 	id := n.ID()
 	r, _ := g.mat.Dims()
 	for i := 0; i < r; i++ {
-		if g.mat.At(i, id) != inf {
+		if !isSame(g.mat.At(i, id), g.absent) {
 			neighbors = append(neighbors, Node(i))
 		}
 	}
@@ -88,7 +89,7 @@ func (g *DirectedDenseGraph) To(n graph.Node) []graph.Node {
 }
 
 func (g *DirectedDenseGraph) HasEdge(n, succ graph.Node) bool {
-	return g.mat.At(n.ID(), succ.ID()) != inf
+	return !isSame(g.mat.At(n.ID(), succ.ID()), g.absent)
 }
 
 func (g *DirectedDenseGraph) EdgeFromTo(n, succ graph.Node) graph.Edge {
@@ -107,7 +108,7 @@ func (g *DirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64) {
 }
 
 func (g *DirectedDenseGraph) RemoveEdge(e graph.Edge) {
-	g.mat.Set(e.From().ID(), e.To().ID(), inf)
+	g.mat.Set(e.From().ID(), e.To().ID(), g.absent)
 }
 
 func (g *DirectedDenseGraph) Matrix() *mat64.Dense {
