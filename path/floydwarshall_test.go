@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package search_test
+package path_test
 
 import (
 	"math"
@@ -13,7 +13,7 @@ import (
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/concrete"
 	"github.com/gonum/graph/internal"
-	"github.com/gonum/graph/search"
+	"github.com/gonum/graph/path"
 )
 
 var floydWarshallTests = []struct {
@@ -29,7 +29,7 @@ var floydWarshallTests = []struct {
 }{
 	{
 		name: "empty directed",
-		g:    func() graph.Mutable { return concrete.NewDirectedGraph() },
+		g:    func() graph.Mutable { return concrete.NewDirectedGraph(math.Inf(1)) },
 
 		query:  concrete.Edge{concrete.Node(0), concrete.Node(1)},
 		weight: math.Inf(1),
@@ -38,7 +38,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "empty undirected",
-		g:    func() graph.Mutable { return concrete.NewGraph() },
+		g:    func() graph.Mutable { return concrete.NewUndirectedGraph(math.Inf(1)) },
 
 		query:  concrete.Edge{concrete.Node(0), concrete.Node(1)},
 		weight: math.Inf(1),
@@ -47,7 +47,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "one edge directed",
-		g:    func() graph.Mutable { return concrete.NewDirectedGraph() },
+		g:    func() graph.Mutable { return concrete.NewDirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
 		},
@@ -62,7 +62,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "one edge undirected",
-		g:    func() graph.Mutable { return concrete.NewGraph() },
+		g:    func() graph.Mutable { return concrete.NewUndirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
 		},
@@ -77,7 +77,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "two paths directed",
-		g:    func() graph.Mutable { return concrete.NewDirectedGraph() },
+		g:    func() graph.Mutable { return concrete.NewDirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			{concrete.Edge{concrete.Node(0), concrete.Node(2)}, 2},
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
@@ -95,7 +95,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "two paths undirected",
-		g:    func() graph.Mutable { return concrete.NewGraph() },
+		g:    func() graph.Mutable { return concrete.NewUndirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			{concrete.Edge{concrete.Node(0), concrete.Node(2)}, 2},
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
@@ -113,7 +113,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "confounding paths directed",
-		g:    func() graph.Mutable { return concrete.NewDirectedGraph() },
+		g:    func() graph.Mutable { return concrete.NewDirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			// Add a path from 0->5 of weight 4
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
@@ -146,7 +146,7 @@ var floydWarshallTests = []struct {
 	},
 	{
 		name: "confounding paths undirected",
-		g:    func() graph.Mutable { return concrete.NewGraph() },
+		g:    func() graph.Mutable { return concrete.NewUndirectedGraph(math.Inf(1)) },
 		edges: []concrete.WeightedEdge{
 			// Add a path from 0->5 of weight 4
 			{concrete.Edge{concrete.Node(0), concrete.Node(1)}, 1},
@@ -193,7 +193,7 @@ func TestFloydWarshall(t *testing.T) {
 			}
 		}
 
-		pt, ok := search.FloydWarshall(g.(graph.Graph), nil)
+		pt, ok := path.FloydWarshall(g.(graph.Graph), nil)
 		if !ok {
 			t.Fatalf("%q: unexpected negative cycle", test.name)
 		}

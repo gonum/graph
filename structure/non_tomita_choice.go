@@ -4,6 +4,6 @@
 
 //+build !tomita
 
-package search
+package structure
 
 const tomitaTanakaTakahashi = false
