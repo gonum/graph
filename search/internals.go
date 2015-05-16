@@ -17,8 +17,8 @@ var inf = math.Inf(1)
 type searchFuncs struct {
 	from, to                               func(graph.Node) []graph.Node
 	isSuccessor, isPredecessor, isNeighbor func(graph.Node, graph.Node) bool
-	cost                                   graph.CostFunc
-	heuristicCost                          graph.HeuristicCostFunc
+	weight                                 graph.WeightFunc
+	heuristic                              graph.HeuristicWeightFunc
 	edgeTo, edgeBetween                    func(graph.Node, graph.Node) graph.Edge
 }
 
@@ -50,10 +50,10 @@ type edge struct {
 func (e edge) From() graph.Node { return e.u }
 func (e edge) To() graph.Node   { return e.v }
 
-// Sets up the cost functions and successor functions so I don't have to do a type switch every
+// Sets up the weight functions and successor functions so I don't have to do a type switch every
 // time. This almost always does more work than is necessary, but since it's only executed once
 // per function, and graph functions are rather costly, the "extra work" should be negligible.
-func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.HeuristicCostFunc) searchFuncs {
+func setupFuncs(g graph.Graph, weight graph.WeightFunc, heuristic graph.HeuristicWeightFunc) searchFuncs {
 	var sf searchFuncs
 
 	switch g := g.(type) {
@@ -85,23 +85,23 @@ func setupFuncs(g graph.Graph, cost graph.CostFunc, heuristicCost graph.Heuristi
 		sf.edgeTo = genEdgeFor(g)
 	}
 
-	if heuristicCost != nil {
-		sf.heuristicCost = heuristicCost
+	if heuristic != nil {
+		sf.heuristic = heuristic
 	} else {
-		if g, ok := g.(graph.HeuristicCoster); ok {
-			sf.heuristicCost = g.HeuristicCost
+		if g, ok := g.(graph.HeuristicWeighter); ok {
+			sf.heuristic = g.HeuristicWeight
 		} else {
-			sf.heuristicCost = NullHeuristic
+			sf.heuristic = NullHeuristic
 		}
 	}
 
-	if cost != nil {
-		sf.cost = cost
+	if weight != nil {
+		sf.weight = weight
 	} else {
-		if g, ok := g.(graph.Coster); ok {
-			sf.cost = g.Cost
+		if g, ok := g.(graph.Weighter); ok {
+			sf.weight = g.Weight
 		} else {
-			sf.cost = UniformCost
+			sf.weight = graph.UniformCostWeight
 		}
 	}
 
@@ -117,7 +117,7 @@ func (e byWeight) Len() int {
 }
 
 func (e byWeight) Less(i, j int) bool {
-	return e[i].Cost < e[j].Cost
+	return e[i].Weight < e[j].Weight
 }
 
 func (e byWeight) Swap(i, j int) {

@@ -30,7 +30,7 @@ func (e Edge) To() graph.Node {
 
 type WeightedEdge struct {
 	graph.Edge
-	Cost float64
+	Weight float64
 }
 
 // A GonumGraph is a very generalized graph that can handle an arbitrary number of vertices and
@@ -98,7 +98,7 @@ func (g *Graph) AddNode(n graph.Node) {
 	g.maxID = max(g.maxID, n.ID())
 }
 
-func (g *Graph) AddUndirectedEdge(e graph.Edge, cost float64) {
+func (g *Graph) AddUndirectedEdge(e graph.Edge, weight float64) {
 	from, to := e.From(), e.To()
 	if !g.Has(from) {
 		g.AddNode(from)
@@ -108,8 +108,8 @@ func (g *Graph) AddUndirectedEdge(e graph.Edge, cost float64) {
 		g.AddNode(to)
 	}
 
-	g.neighbors[from.ID()][to.ID()] = WeightedEdge{Edge: e, Cost: cost}
-	g.neighbors[to.ID()][from.ID()] = WeightedEdge{Edge: e, Cost: cost}
+	g.neighbors[from.ID()][to.ID()] = WeightedEdge{Edge: e, Weight: weight}
+	g.neighbors[to.ID()][from.ID()] = WeightedEdge{Edge: e, Weight: weight}
 }
 
 func (g *Graph) RemoveNode(n graph.Node) {
@@ -199,10 +199,10 @@ func (g *Graph) Nodes() []graph.Node {
 	return nodes
 }
 
-func (g *Graph) Cost(e graph.Edge) float64 {
+func (g *Graph) Weight(e graph.Edge) float64 {
 	if n, ok := g.neighbors[e.From().ID()]; ok {
 		if we, ok := n[e.To().ID()]; ok {
-			return we.Cost
+			return we.Weight
 		}
 	}
 	return inf

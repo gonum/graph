@@ -93,34 +93,34 @@ type DirectedEdgeList interface {
 	DirectedEdgeLister
 }
 
-// A Graph that implements Coster has an actual cost between adjacent nodes, also known as a
-// weighted graph. If a graph implements coster and a function needs to read cost (e.g. A*),
+// A Graph that implements Weighter has an actual weight between adjacent nodes, also known as a
+// weighted graph. If a graph implements weighter and a function needs to read weight (e.g. A*),
 // this function will take precedence over the Uniform Cost function (all weights are 1) if "nil"
 // is passed in for the function argument.
 //
 // If the argument is nil, or the edge is invalid for some reason, this should return math.Inf(1)
-type Coster interface {
-	Cost(Edge) float64
+type Weighter interface {
+	Weight(Edge) float64
 }
 
-type CostGraph interface {
-	Coster
+type Weighted interface {
+	Weighter
 	Graph
 }
 
-type CostDirected interface {
-	Coster
+type WeightDirected interface {
+	Weighter
 	Directed
 }
 
-// A graph that implements HeuristicCoster implements a heuristic between any two given nodes.
-// Like Coster, if a graph implements this and a function needs a heuristic cost (e.g. A*), this
+// A graph that implements HeuristicWeighter implements a heuristic between any two given nodes.
+// Like Weighter, if a graph implements this and a function needs a heuristic weight (e.g. A*), this
 // function will take precedence over the Null Heuristic (always returns 0) if "nil" is passed in
-// for the function argument. If HeuristicCost is not intended to be used, it can be implemented as
+// for the function argument. If HeuristicWeight is not intended to be used, it can be implemented as
 // the null heuristic (always returns 0).
-type HeuristicCoster interface {
-	// HeuristicCost returns a heuristic cost between any two nodes.
-	HeuristicCost(n1, n2 Node) float64
+type HeuristicWeighter interface {
+	// HeuristicCost returns a heuristic weight between any two nodes.
+	HeuristicWeight(n1, n2 Node) float64
 }
 
 // A Mutable is a graph that can have arbitrary nodes and edges added or removed.
@@ -163,14 +163,14 @@ type Mutable interface {
 // be returned as Edge{to,from}. Thus there's a conflict that cannot be resolved between the
 // two interface requirements.
 type MutableUndirected interface {
-	CostGraph
+	Weighted
 	Mutable
 
 	// Like EdgeBetween in Graph, AddUndirectedEdge adds an edge between two nodes.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
 	// if the nodes already exist it should NOT replace existing nodes with e.From() or
 	// e.To(). Overwriting nodes should explicitly be done with another call to AddNode()
-	AddUndirectedEdge(e Edge, cost float64)
+	AddUndirectedEdge(e Edge, weight float64)
 
 	// RemoveEdge clears the stored edge between two nodes. Calling this will never
 	// remove a node. If the edge does not exist this is a no-op, not an error.
@@ -183,66 +183,75 @@ type MutableUndirected interface {
 // notes, however, a graph cannot safely implement Mutable and MutableDirected
 // at the same time, because of the functionality of a EdgeTo in Directed.
 type MutableDirected interface {
-	CostDirected
+	WeightDirected
 	Mutable
 
 	// Like EdgeTo in Directed, AddDirectedEdge adds an edge with the given direction.
 	// If one or both nodes do not exist, the graph is expected to add them. However,
 	// if the nodes already exist it should NOT replace existing nodes with e.From() or
 	// e.To(). Overwriting nodes should explicitly be done with another call to AddNode()
-	AddDirectedEdge(e Edge, cost float64)
+	AddDirectedEdge(e Edge, weight float64)
 
 	// Removes an edge FROM e.From TO e.To. If no such edge exists, this is a no-op,
 	// not an error.
 	RemoveDirectedEdge(Edge)
 }
 
-// A function that returns the cost of following an edge
-type CostFunc func(Edge) float64
+// A function that returns the weight of an edge
+type WeightFunc func(Edge) float64
 
-func uniformCost(e Edge) float64 {
+// UniformCostWeight returns 1 for present edges and math.Inf(1) for absent edges.
+func UniformCostWeight(e Edge) float64 {
 	if e == nil {
 		return math.Inf(1)
 	}
 	return 1
 }
 
-// Estimates the cost of travelling between two nodes
-type HeuristicCostFunc func(Node, Node) float64
+// UniformLinkWeight returns 1 for present edges and 0 for absent edges.
+func UniformLinkWeight(e Edge) float64 {
+	if e == nil {
+		return 0
+	}
+	return 1
+}
+
+// Estimates the weight between two nodes
+type HeuristicWeightFunc func(Node, Node) float64
 
 // CopyUndirected copies the undirected graph src into dst; maintaining all
 // node IDs without clearing items already in dst.
-func CopyUndirected(dst MutableUndirected, src Undirected) {
-	var cost CostFunc
-	if src, ok := src.(Coster); ok {
-		cost = src.Cost
+func CopyUndirected(dst MutableUndirected, src Undirected, weight WeightFunc) {
+	var weightOf WeightFunc
+	if src, ok := src.(Weighter); ok {
+		weightOf = src.Weight
 	} else {
-		cost = uniformCost
+		weightOf = weight
 	}
 	for _, node := range src.Nodes() {
 		dst.AddNode(node)
 		for _, succ := range src.From(node) {
 			edge := src.EdgeBetween(node, succ)
-			dst.AddUndirectedEdge(edge, cost(edge))
+			dst.AddUndirectedEdge(edge, weightOf(edge))
 		}
 	}
 }
 
 // CopyDirected copies the directed graph src into dst; maintaining all node
 // IDs without clearing items already in dst.
-func CopyDirected(dst MutableDirected, src Directed) {
-	var cost CostFunc
-	if src, ok := src.(Coster); ok {
-		cost = src.Cost
+func CopyDirected(dst MutableDirected, src Directed, weight WeightFunc) {
+	var weightOf WeightFunc
+	if src, ok := src.(Weighter); ok {
+		weightOf = src.Weight
 	} else {
-		cost = uniformCost
+		weightOf = weight
 	}
 	for _, node := range src.Nodes() {
 		succs := src.From(node)
 		dst.AddNode(node)
 		for _, succ := range succs {
 			edge := src.EdgeFromTo(node, succ)
-			dst.AddDirectedEdge(edge, cost(edge))
+			dst.AddDirectedEdge(edge, weightOf(edge))
 		}
 	}
 

@@ -16,22 +16,22 @@ import (
 )
 
 // Returns an ordered list consisting of the nodes between start and goal. The path will be the
-// shortest path assuming the function heuristicCost is admissible. The second return value is the
-// cost, and the third is the number of nodes expanded while searching (useful info for tuning
+// shortest path assuming the function heuristic is admissible. The second return value is the
+// weight, and the third is the number of nodes expanded while searching (useful info for tuning
 // heuristics). Negative Costs will cause bad things to happen, as well as negative heuristic
 // estimates.
 //
-// A heuristic is admissible if, for any node in the graph, the heuristic estimate of the cost
-// between the node and the goal is less than or set to the true cost.
+// A heuristic is admissible if, for any node in the graph, the heuristic estimate of the weight
+// between the node and the goal is less than or set to the true weight.
 //
 // Performance may be improved by providing a consistent heuristic (though one is not needed to
 // find the optimal path), a heuristic is consistent if its value for a given node is less than
-// (or equal to) the actual cost of reaching its neighbors + the heuristic estimate for the
+// (or equal to) the actual weight of reaching its neighbors + the heuristic estimate for the
 // neighbor itself. You can force consistency by making your HeuristicCost function return
 // max(NonConsistentHeuristicCost(neighbor,goal), NonConsistentHeuristicCost(self,goal) -
 // Cost(self,neighbor)). If there are multiple neighbors, take the max of all of them.
 //
-// Cost and HeuristicCost take precedence for evaluating cost/heuristic distance. If one is not
+// Cost and HeuristicCost take precedence for evaluating weight/heuristic distance. If one is not
 // present (i.e. nil) the function will check the graph's interface for the respective interface:
 // Coster for Cost and HeuristicCoster for HeuristicCost. If the correct one is present, it will
 // use the graph's function for evaluation.
@@ -41,16 +41,16 @@ import (
 //
 // To run Uniform Cost Search, run A* with the NullHeuristic.
 //
-// To run Breadth First Search, run A* with both the NullHeuristic and UniformCost (or any cost
+// To run Breadth First Search, run A* with both the NullHeuristic and UniformCost (or any weight
 // function that returns a uniform positive value.)
-func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristicCost graph.HeuristicCostFunc) (path []graph.Node, pathCost float64, nodesExpanded int) {
-	sf := setupFuncs(g, cost, heuristicCost)
-	from, cost, heuristicCost, edgeTo := sf.from, sf.cost, sf.heuristicCost, sf.edgeTo
+func AStar(start, goal graph.Node, g graph.Graph, weight graph.WeightFunc, heuristic graph.HeuristicWeightFunc) (path []graph.Node, pathCost float64, nodesExpanded int) {
+	sf := setupFuncs(g, weight, heuristic)
+	from, weight, heuristic, edgeTo := sf.from, sf.weight, sf.heuristic, sf.edgeTo
 
 	closedSet := make(map[int]internalNode)
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
 	heap.Init(openSet)
-	node := internalNode{start, 0, heuristicCost(start, goal)}
+	node := internalNode{start, 0, heuristic(start, goal)}
 	heap.Push(openSet, node)
 	predecessor := make(map[int]graph.Node)
 
@@ -70,15 +70,15 @@ func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristic
 				continue
 			}
 
-			g := curr.gscore + cost(edgeTo(curr.Node, neighbor))
+			g := curr.gscore + weight(edgeTo(curr.Node, neighbor))
 
 			if existing, exists := openSet.Find(neighbor.ID()); !exists {
 				predecessor[neighbor.ID()] = curr
-				node = internalNode{neighbor, g, g + heuristicCost(neighbor, goal)}
+				node = internalNode{neighbor, g, g + heuristic(neighbor, goal)}
 				heap.Push(openSet, node)
 			} else if g < existing.gscore {
 				predecessor[neighbor.ID()] = curr
-				openSet.Fix(neighbor.ID(), g, g+heuristicCost(neighbor, goal))
+				openSet.Fix(neighbor.ID(), g, g+heuristic(neighbor, goal))
 			}
 		}
 	}
@@ -91,7 +91,7 @@ func AStar(start, goal graph.Node, g graph.Graph, cost graph.CostFunc, heuristic
 // BreadthFirstSearch returns the path found and the number of nodes visited in the search.
 // The returned path is nil if no path exists.
 func BreadthFirstSearch(start, goal graph.Node, g graph.Graph) ([]graph.Node, int) {
-	path, _, visited := AStar(start, goal, g, UniformCost, NullHeuristic)
+	path, _, visited := AStar(start, goal, g, graph.UniformCostWeight, NullHeuristic)
 	return path, visited
 }
 
@@ -99,18 +99,18 @@ func BreadthFirstSearch(start, goal graph.Node, g graph.Graph) ([]graph.Node, in
 // roughly equivalent to running A* with the Null Heuristic from a single node to every other node
 // in the graph -- though it's a fair bit faster because running A* in that way will recompute
 // things it's already computed every call. Note that you won't necessarily get the same path
-// you would get for A*, but the cost is guaranteed to be the same (that is, if multiple shortest
+// you would get for A*, but the weight is guaranteed to be the same (that is, if multiple shortest
 // paths exist, you may get a different shortest path).
 //
 // Like A*, Dijkstra's Algorithm likely won't run correctly with negative edge weights -- use
 // Bellman-Ford for that instead.
 //
-// Dijkstra's algorithm usually only returns a cost map, however, since the data is available
+// Dijkstra's algorithm usually only returns a weight map, however, since the data is available
 // this version will also reconstruct the path to every node.
-func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64) {
+func Dijkstra(source graph.Node, g graph.Graph, weight graph.WeightFunc) (paths map[int][]graph.Node, costs map[int]float64) {
 
-	sf := setupFuncs(g, cost, nil)
-	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
+	sf := setupFuncs(g, weight, nil)
+	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
 
 	nodes := g.Nodes()
 	openSet := &aStarPriorityQueue{nodes: make([]internalNode, 0), indexList: make(map[int]int)}
@@ -128,12 +128,12 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 		nodeIDMap[node.ID()] = node
 
 		for _, neighbor := range from(node) {
-			tmpCost := costs[node.ID()] + cost(edgeTo(node, neighbor))
-			if cost, ok := costs[neighbor.ID()]; !ok {
+			tmpCost := costs[node.ID()] + weight(edgeTo(node, neighbor))
+			if weight, ok := costs[neighbor.ID()]; !ok {
 				costs[neighbor.ID()] = tmpCost
 				predecessor[neighbor.ID()] = node
 				heap.Push(openSet, internalNode{neighbor, tmpCost, tmpCost})
-			} else if tmpCost < cost {
+			} else if tmpCost < weight {
 				costs[neighbor.ID()] = tmpCost
 				predecessor[neighbor.ID()] = node
 				openSet.Fix(neighbor.ID(), tmpCost, tmpCost)
@@ -152,7 +152,7 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 // take a single source and find the shortest path to every other (reachable) node in the graph.
 // Bellman-Ford, however, will detect negative edge loops and abort if one is present. A negative
 // edge loop occurs when there is a cycle in the graph such that it can take an edge with a
-// negative cost over and over. A -(-2)> B -(2)> C isn't a loop because A->B can only be taken once,
+// negative weight over and over. A -(-2)> B -(2)> C isn't a loop because A->B can only be taken once,
 // but A<-(-2)->B-(2)>C is one because A and B have a bi-directional edge, and algorithms like
 // Dijkstra's will infinitely flail between them getting progressively lower costs.
 //
@@ -162,9 +162,9 @@ func Dijkstra(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[
 // Like Dijkstra's, along with the costs this implementation will also construct all the paths for
 // you. In addition, it has a third return value which will be true if the algorithm was aborted
 // due to the presence of a negative edge weight cycle.
-func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths map[int][]graph.Node, costs map[int]float64, err error) {
-	sf := setupFuncs(g, cost, nil)
-	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
+func BellmanFord(source graph.Node, g graph.Graph, weight graph.WeightFunc) (paths map[int][]graph.Node, costs map[int]float64, err error) {
+	sf := setupFuncs(g, weight, nil)
+	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
 
 	predecessor := make(map[int]graph.Node)
 	costs = make(map[int]float64)
@@ -178,7 +178,7 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 			nodeIDMap[node.ID()] = node
 			succs := from(node)
 			for _, succ := range succs {
-				weight := cost(edgeTo(node, succ))
+				weight := weight(edgeTo(node, succ))
 				nodeIDMap[succ.ID()] = succ
 
 				if dist := costs[node.ID()] + weight; dist < costs[succ.ID()] {
@@ -192,7 +192,7 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 
 	for _, node := range nodes {
 		for _, succ := range from(node) {
-			weight := cost(edgeTo(node, succ))
+			weight := weight(edgeTo(node, succ))
 			if costs[node.ID()]+weight < costs[succ.ID()] {
 				return nil, nil, errors.New("Negative edge cycle detected")
 			}
@@ -206,10 +206,10 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 	return paths, costs, nil
 }
 
-// Johnson's Algorithm generates the lowest cost path between every pair of nodes in the graph.
+// Johnson's Algorithm generates the lowest weight path between every pair of nodes in the graph.
 //
 // It makes use of Bellman-Ford and a dummy graph. It creates a dummy node containing edges with a
-// cost of zero to every other node. Then it runs Bellman-Ford with this dummy node as the source.
+// weight of zero to every other node. Then it runs Bellman-Ford with this dummy node as the source.
 // It then modifies the all the nodes' edge weights (which gets rid of all negative weights).
 //
 // Finally, it removes the dummy node and runs Dijkstra's starting at every node.
@@ -220,12 +220,12 @@ func BellmanFord(source graph.Node, g graph.Graph, cost graph.CostFunc) (paths m
 // a GonumGraph (so it can add/remove the dummy node and edges and reweight the graph).
 //
 // Its return values are, in order: a map from the source node, to the destination node, to the
-// path between them; a map from the source node, to the destination node, to the cost of the path
+// path between them; a map from the source node, to the destination node, to the weight of the path
 // between them; and a bool that is true if Bellman-Ford detected a negative edge weight cycle --
 // thus causing it (and this algorithm) to abort (if aborted is true, both maps will be nil).
-func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]graph.Node, nodeCosts map[int]map[int]float64, err error) {
-	sf := setupFuncs(g, cost, nil)
-	from, cost, edgeTo := sf.from, sf.cost, sf.edgeTo
+func Johnson(g graph.Graph, weight graph.WeightFunc) (nodePaths map[int]map[int][]graph.Node, nodeCosts map[int]map[int]float64, err error) {
+	sf := setupFuncs(g, weight, nil)
+	from, weight, edgeTo := sf.from, sf.weight, sf.edgeTo
 
 	/* Copy graph into a mutable one since it has to be altered for this algorithm */
 	dummyGraph := concrete.NewDirectedGraph()
@@ -235,7 +235,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 		dummyGraph.AddNode(node)
 		for _, neighbor := range neighbors {
 			e := edgeTo(node, neighbor)
-			c := cost(e)
+			c := weight(e)
 			// Make a new edge with from and to swapped;
 			// works due to the fact that we're not returning
 			// any edges in this so the contract doesn't need
@@ -248,7 +248,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 		}
 	}
 
-	/* Step 1: Dummy node with 0 cost edge weights to every other node*/
+	/* Step 1: Dummy node with 0 weight edge weights to every other node*/
 	dummyNode := dummyGraph.NewNode()
 	dummyGraph.AddNode(dummyNode)
 	for _, node := range g.Nodes() {
@@ -265,7 +265,7 @@ func Johnson(g graph.Graph, cost graph.CostFunc) (nodePaths map[int]map[int][]gr
 	for _, node := range g.Nodes() {
 		for _, succ := range from(node) {
 			e := edgeTo(node, succ)
-			dummyGraph.AddDirectedEdge(e, cost(e)+costs[node.ID()]-costs[succ.ID()])
+			dummyGraph.AddDirectedEdge(e, weight(e)+costs[node.ID()]-costs[succ.ID()])
 		}
 	}
 
@@ -322,15 +322,6 @@ func DepthFirstSearch(start, goal graph.Node, g graph.Graph) []graph.Node {
 // An admissible, consistent heuristic that won't speed up computation time at all.
 func NullHeuristic(_, _ graph.Node) float64 {
 	return 0
-}
-
-// Assumes all edges in the graph have the same weight (including edges that don't exist!)
-func UniformCost(e graph.Edge) float64 {
-	if e == nil {
-		return inf
-	}
-
-	return 1
 }
 
 /* Basic Graph tests */
@@ -461,9 +452,9 @@ puts the resulting minimum spanning tree in the dst graph */
 // Argument > Interface > UniformCost.
 //
 // The destination must be empty (or at least disjoint with the node IDs of the input)
-func Prim(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
-	sf := setupFuncs(g, cost, nil)
-	cost = sf.cost
+func Prim(dst graph.MutableUndirected, g graph.EdgeList, weight graph.WeightFunc) {
+	sf := setupFuncs(g, weight, nil)
+	weight = sf.weight
 
 	nlist := g.Nodes()
 
@@ -484,14 +475,14 @@ func Prim(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
 			if (dst.Has(edge.From()) && remainingNodes.Has(edge.To().ID())) ||
 				(dst.Has(edge.To()) && remainingNodes.Has(edge.From().ID())) {
 
-				edges = append(edges, concrete.WeightedEdge{Edge: edge, Cost: cost(edge)})
+				edges = append(edges, concrete.WeightedEdge{Edge: edge, Weight: weight(edge)})
 			}
 		}
 
 		sort.Sort(byWeight(edges))
 		myEdge := edges[0]
 
-		dst.AddUndirectedEdge(myEdge.Edge, myEdge.Cost)
+		dst.AddUndirectedEdge(myEdge.Edge, myEdge.Weight)
 		remainingNodes.Remove(myEdge.Edge.From().ID())
 	}
 
@@ -502,13 +493,13 @@ func Prim(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
 // As with other algorithms with Cost, the precedence goes Argument > Interface > UniformCost.
 //
 // The destination must be empty (or at least disjoint with the node IDs of the input)
-func Kruskal(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc) {
-	cost = setupFuncs(g, cost, nil).cost
+func Kruskal(dst graph.MutableUndirected, g graph.EdgeList, weight graph.WeightFunc) {
+	weight = setupFuncs(g, weight, nil).weight
 
 	edgeList := g.Edges()
 	edges := make([]concrete.WeightedEdge, 0, len(edgeList))
 	for _, edge := range edgeList {
-		edges = append(edges, concrete.WeightedEdge{Edge: edge, Cost: cost(edge)})
+		edges = append(edges, concrete.WeightedEdge{Edge: edge, Weight: weight(edge)})
 	}
 
 	sort.Sort(byWeight(edges))
@@ -523,7 +514,7 @@ func Kruskal(dst graph.MutableUndirected, g graph.EdgeList, cost graph.CostFunc)
 		// should work fine without checking both ways
 		if s1, s2 := ds.find(edge.Edge.From().ID()), ds.find(edge.Edge.To().ID()); s1 != s2 {
 			ds.union(s1, s2)
-			dst.AddUndirectedEdge(edge.Edge, edge.Cost)
+			dst.AddUndirectedEdge(edge.Edge, edge.Weight)
 		}
 	}
 }

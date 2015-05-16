@@ -184,10 +184,10 @@ func TestFloydWarshall(t *testing.T) {
 		g := test.g()
 		for _, e := range test.edges {
 			switch g := g.(type) {
-			case graph.MutableDirectedGraph:
-				g.AddDirectedEdge(e, e.Cost)
-			case graph.MutableGraph:
-				g.AddUndirectedEdge(e, e.Cost)
+			case graph.MutableDirected:
+				g.AddDirectedEdge(e, e.Weight)
+			case graph.MutableUndirected:
+				g.AddUndirectedEdge(e, e.Weight)
 			default:
 				panic("floyd warshall: bad graph type")
 			}
@@ -200,12 +200,12 @@ func TestFloydWarshall(t *testing.T) {
 
 		// Check all random paths returned are OK.
 		for i := 0; i < 10; i++ {
-			p, weight, unique := pt.Between(test.query.Head(), test.query.Tail())
+			p, weight, unique := pt.Between(test.query.From(), test.query.To())
 			if weight != test.weight {
 				t.Errorf("%q: unexpected weight from Between: got:%f want:%f",
 					test.name, weight, test.weight)
 			}
-			if weight := pt.Weight(test.query.Head(), test.query.Tail()); weight != test.weight {
+			if weight := pt.Weight(test.query.From(), test.query.To()); weight != test.weight {
 				t.Errorf("%q: unexpected weight from Weight: got:%f want:%f",
 					test.name, weight, test.weight)
 			}
@@ -229,14 +229,14 @@ func TestFloydWarshall(t *testing.T) {
 					test.name, p, test.want)
 			}
 
-			np, weight, unique := pt.Between(test.none.Head(), test.none.Tail())
+			np, weight, unique := pt.Between(test.none.From(), test.none.To())
 			if np != nil || !math.IsInf(weight, 1) || unique != false {
 				t.Errorf("%q: unexpected path:\ngot: path=%v weight=%f unique=%t\nwant:path=<nil> weight=+Inf unique=false",
 					test.name, np, weight, unique)
 			}
 		}
 
-		paths, weight := pt.AllBetween(test.query.Head(), test.query.Tail())
+		paths, weight := pt.AllBetween(test.query.From(), test.query.To())
 		if weight != test.weight {
 			t.Errorf("%q: unexpected weight from Between: got:%f want:%f",
 				test.name, weight, test.weight)
@@ -257,7 +257,7 @@ func TestFloydWarshall(t *testing.T) {
 				test.name, got, test.want)
 		}
 
-		np, weight := pt.AllBetween(test.none.Head(), test.none.Tail())
+		np, weight := pt.AllBetween(test.none.From(), test.none.To())
 		if np != nil || !math.IsInf(weight, 1) {
 			t.Errorf("%q: unexpected path:\ngot: paths=%v weight=%f\nwant:path=<nil> weight=+Inf",
 				test.name, np, weight)

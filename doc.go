@@ -11,17 +11,17 @@ special case of directed graphs that happen to have reciprocal edges. Graphs are
 unweighted, but functions that require weighted edges have several methods of dealing with this.
 In order of precedence:
 
-1. These functions have an argument called Cost (and in some cases, HeuristicCost). If this is
+1. These functions have an argument called Weight (and in some cases, HeuristicWeight). If this is
 present, it will always be used to determine the cost between two nodes.
 
-2. These functions will check if your graph implements the Coster (and/or HeuristicCoster)
-interface. If this is present, and the Cost (or HeuristicCost) argument is nil, these functions
+2. These functions will check if your graph implements the Weighter (and/or HeuristicWeighter)
+interface. If this is present, and the Weight (or HeuristicCost) argument is nil, these functions
 will be used.
 
 3. Finally, if no user data is supplied, it will use the functions UniformCost (always returns 1)
 and/or NulLHeuristic (always returns 0).
 
-For information on the specification for Cost functions, please see the Coster interface.
+For information on the specification for Weight functions, please see the Weighter interface.
 
 Finally, although the functions take in a Graph -- they will always use the correct behavior.
 If your graph implements DirectedGraph, it will use Successors and Predecessors where applicable,

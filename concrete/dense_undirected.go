@@ -89,12 +89,12 @@ func (g *UndirectedDenseGraph) EdgeBetween(n, neighbor graph.Node) graph.Edge {
 	return nil
 }
 
-func (g *UndirectedDenseGraph) Cost(e graph.Edge) float64 {
+func (g *UndirectedDenseGraph) Weight(e graph.Edge) float64 {
 	return g.mat.At(e.From().ID(), e.To().ID())
 }
 
-func (g *UndirectedDenseGraph) SetEdgeCost(e graph.Edge, cost float64) {
-	g.mat.SetSym(e.From().ID(), e.To().ID(), cost)
+func (g *UndirectedDenseGraph) SetEdgeWeight(e graph.Edge, weight float64) {
+	g.mat.SetSym(e.From().ID(), e.To().ID(), weight)
 }
 
 func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge) {

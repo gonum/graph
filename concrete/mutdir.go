@@ -71,7 +71,7 @@ func (g *DirectedGraph) AddNode(n graph.Node) {
 	g.maxID = max(g.maxID, n.ID())
 }
 
-func (g *DirectedGraph) AddDirectedEdge(e graph.Edge, cost float64) {
+func (g *DirectedGraph) AddDirectedEdge(e graph.Edge, weight float64) {
 	from, to := e.From(), e.To()
 	if !g.Has(from) {
 		g.AddNode(from)
@@ -81,8 +81,8 @@ func (g *DirectedGraph) AddDirectedEdge(e graph.Edge, cost float64) {
 		g.AddNode(to)
 	}
 
-	g.successors[from.ID()][to.ID()] = WeightedEdge{Edge: e, Cost: cost}
-	g.predecessors[to.ID()][from.ID()] = WeightedEdge{Edge: e, Cost: cost}
+	g.successors[from.ID()][to.ID()] = WeightedEdge{Edge: e, Weight: weight}
+	g.predecessors[to.ID()][from.ID()] = WeightedEdge{Edge: e, Weight: weight}
 }
 
 func (g *DirectedGraph) RemoveNode(n graph.Node) {
@@ -222,10 +222,10 @@ func (g *DirectedGraph) Nodes() []graph.Node {
 	return nodes
 }
 
-func (g *DirectedGraph) Cost(e graph.Edge) float64 {
+func (g *DirectedGraph) Weight(e graph.Edge) float64 {
 	if s, ok := g.successors[e.From().ID()]; ok {
 		if we, ok := s[e.To().ID()]; ok {
-			return we.Cost
+			return we.Weight
 		}
 	}
 	return inf

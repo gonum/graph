@@ -34,14 +34,14 @@ func FloydWarshall(g graph.Graph, weight graph.WeightFunc) (paths ShortestPaths,
 		}
 	}
 	if weight == nil {
-		if g, ok := g.(graph.Coster); ok {
-			weight = g.Cost
+		if g, ok := g.(graph.Weighter); ok {
+			weight = g.Weight
 		} else {
-			weight = UniformCost
+			weight = graph.UniformCostWeight
 		}
 	}
 
-	nodes := g.NodeList()
+	nodes := g.Nodes()
 
 	indexOf := make(map[int]int, len(nodes))
 	for i, n := range nodes {
