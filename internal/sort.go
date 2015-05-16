@@ -4,6 +4,8 @@
 
 package internal
 
+import "github.com/gonum/graph"
+
 // BySliceValues implements the sort.Interface sorting a slice of
 // []int lexically by the values of the []int.
 type BySliceValues [][]int
@@ -26,3 +28,10 @@ func (c BySliceValues) Less(i, j int) bool {
 	return len(a) < len(b)
 }
 func (c BySliceValues) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+
+// ByID implements the sort.Interface sorting a []graph.Node by ID.
+type ByID []graph.Node
+
+func (n ByID) Len() int           { return len(n) }
+func (n ByID) Less(i, j int) bool { return n[i].ID() < n[j].ID() }
+func (n ByID) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }

@@ -132,7 +132,7 @@ type johnsonGraph struct {
 // johnsonGraphFrom returns a deep copy of the graph g.
 func johnsonGraphFrom(g graph.Directed) johnsonGraph {
 	nodes := g.Nodes()
-	sort.Sort(byID(nodes))
+	sort.Sort(internal.ByID(nodes))
 	c := johnsonGraph{
 		orig:  nodes,
 		index: make(map[int]int, len(nodes)),
@@ -153,12 +153,6 @@ func johnsonGraphFrom(g graph.Directed) johnsonGraph {
 	}
 	return c
 }
-
-type byID []graph.Node
-
-func (n byID) Len() int           { return len(n) }
-func (n byID) Less(i, j int) bool { return n[i].ID() < n[j].ID() }
-func (n byID) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
 
 // indexOf returns the index of the retained node for the given node ID.
 func (g johnsonGraph) indexOf(id int) int {

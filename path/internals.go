@@ -191,20 +191,6 @@ func (pq *aStarPriorityQueue) Exists(id int) bool {
 	return ok
 }
 
-type denseNodeSorter []graph.Node
-
-func (dns denseNodeSorter) Less(i, j int) bool {
-	return dns[i].ID() < dns[j].ID()
-}
-
-func (dns denseNodeSorter) Swap(i, j int) {
-	dns[i], dns[j] = dns[j], dns[i]
-}
-
-func (dns denseNodeSorter) Len() int {
-	return len(dns)
-}
-
 // General utility funcs
 
 // Rebuilds a path backwards from the goal.
