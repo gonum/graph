@@ -16,10 +16,7 @@ import (
 // that a negative cycle exists in the graph. If weight is nil and the graph does not
 // implement graph.Coster, graph.UniformCostWeight is used.
 func FloydWarshall(g graph.Graph, weight graph.WeightFunc) (paths ShortestPaths, ok bool) {
-	var (
-		from   = g.From
-		edgeTo func(graph.Node, graph.Node) graph.Edge
-	)
+	var edgeTo func(graph.Node, graph.Node) graph.Edge
 	switch g := g.(type) {
 	case graph.Directed:
 		edgeTo = g.EdgeFromTo
@@ -61,7 +58,7 @@ func FloydWarshall(g graph.Graph, weight graph.WeightFunc) (paths ShortestPaths,
 	}
 	for i, u := range nodes {
 		paths.dist.Set(i, i, 0)
-		for _, v := range from(u) {
+		for _, v := range g.From(u) {
 			j := indexOf[v.ID()]
 			paths.set(i, j, weight(edgeTo(u, v)), j)
 		}
