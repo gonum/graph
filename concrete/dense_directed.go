@@ -111,7 +111,7 @@ func (g *DirectedDenseGraph) RemoveEdge(e graph.Edge) {
 	g.mat.Set(e.From().ID(), e.To().ID(), g.absent)
 }
 
-func (g *DirectedDenseGraph) Matrix() *mat64.Dense {
+func (g *DirectedDenseGraph) Matrix() mat64.Matrix {
 	// Prevent alteration of dimensions of the returned matrix.
 	m := *g.mat
 	return &m

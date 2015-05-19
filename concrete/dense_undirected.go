@@ -101,7 +101,7 @@ func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge) {
 	g.mat.SetSym(e.From().ID(), e.To().ID(), g.absent)
 }
 
-func (g *UndirectedDenseGraph) Matrix() *mat64.SymDense {
+func (g *UndirectedDenseGraph) Matrix() mat64.Matrix {
 	// Prevent alteration of dimensions of the returned matrix.
 	m := *g.mat
 	return &m
