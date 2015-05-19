@@ -102,9 +102,7 @@ func (g *UndirectedDenseGraph) RemoveEdge(e graph.Edge) {
 }
 
 func (g *UndirectedDenseGraph) Matrix() *mat64.SymDense {
-	// Prevent alteration of dimentions of the returned matrix.
+	// Prevent alteration of dimensions of the returned matrix.
 	m := *g.mat
 	return &m
 }
-
-func (g *UndirectedDenseGraph) Crunch() {}

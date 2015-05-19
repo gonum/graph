@@ -116,5 +116,3 @@ func (g *DirectedDenseGraph) Matrix() *mat64.Dense {
 	m := *g.mat
 	return &m
 }
-
-func (g *DirectedDenseGraph) Crunch() {}
