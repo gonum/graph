@@ -80,12 +80,12 @@ type ReducedGraph interface {
 //
 // graph.Undirect may be used as a shim to allow modularization of
 // directed graphs with the undirected modularity function.
-func Modularize(g graph.Graph, resolution float64, src *rand.Rand) ReducedGraph {
+func Modularize(g graph.Graph, resolution float64, src *rand.Rand, options ...Option) ReducedGraph {
 	switch g := g.(type) {
 	case graph.Undirected:
-		return louvainUndirected(g, resolution, src)
+		return louvainUndirected(g, resolution, src, options)
 	case graph.Directed:
-		return louvainDirected(g, resolution, src)
+		return louvainDirected(g, resolution, src, options)
 	default:
 		panic(fmt.Sprintf("community: invalid graph type: %T", g))
 	}
@@ -190,7 +190,7 @@ type ReducedMultiplex interface {
 //
 // graph.Undirect may be used as a shim to allow modularization of
 // directed graphs with the undirected modularity function.
-func ModularizeMultiplex(g Multiplex, weights, resolutions []float64, all bool, src *rand.Rand) ReducedMultiplex {
+func ModularizeMultiplex(g Multiplex, weights, resolutions []float64, src *rand.Rand, options ...Option) ReducedMultiplex {
 	if weights != nil && len(weights) != g.Depth() {
 		panic("community: weights vector length mismatch")
 	}
@@ -200,9 +200,9 @@ func ModularizeMultiplex(g Multiplex, weights, resolutions []float64, all bool, 
 
 	switch g := g.(type) {
 	case UndirectedMultiplex:
-		return louvainUndirectedMultiplex(g, weights, resolutions, all, src)
+		return louvainUndirectedMultiplex(g, weights, resolutions, src, options)
 	case DirectedMultiplex:
-		return louvainDirectedMultiplex(g, weights, resolutions, all, src)
+		return louvainDirectedMultiplex(g, weights, resolutions, src, options)
 	default:
 		panic(fmt.Sprintf("community: invalid graph type: %T", g))
 	}
@@ -375,3 +375,22 @@ func depth(weights []float64) int {
 	}
 	return len(weights)
 }
+
+// Option is a functional option for graph modularization.
+type Option func(*option)
+
+type option struct {
+	// Consider all communities as canidates for moving.
+	all bool
+
+	// Maximum number of interations for Louvain algorithm.
+	maxIterations int
+}
+
+// ShortCut specifies that only connected communities should be considered, even
+// when moving to a non-connected community might improve modularity.
+func ShortCut() Option { return func(o *option) { o.all = false } }
+
+// MaxIterations specifies that maximum number of iterations to perform for a modularization.
+// If i is zero, no limit is placed on the modularization interations.
+func MaxIterations(i int) Option { return func(o *option) { o.maxIterations = i } }

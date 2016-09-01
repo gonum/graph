@@ -93,7 +93,7 @@ func ExampleProfile_multiplex() {
 
 	// Get the profile of internal node weight for resolutions
 	// between 0.1 and 10 using logarithmic bisection.
-	p, err := Profile(ModularMultiplexScore(g, weights, true, WeightMultiplex, 10, nil), true, 1e-3, 0.1, 10)
+	p, err := Profile(ModularMultiplexScore(g, weights, WeightMultiplex, 10, nil), true, 1e-3, 0.1, 10)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -206,9 +206,7 @@ func TestProfileUndirectedMultiplex(t *testing.T) {
 			continue
 		}
 
-		const all = true
-
-		fn := ModularMultiplexScore(g, weights, all, WeightMultiplex, 10, nil)
+		fn := ModularMultiplexScore(g, weights, WeightMultiplex, 10, nil)
 		p, err := Profile(fn, true, 1e-3, 0.1, 10)
 		if err != nil {
 			t.Errorf("%s: unexpected error: %v", test.name, err)
@@ -241,9 +239,7 @@ func TestProfileDirectedMultiplex(t *testing.T) {
 			continue
 		}
 
-		const all = true
-
-		fn := ModularMultiplexScore(g, weights, all, WeightMultiplex, 10, nil)
+		fn := ModularMultiplexScore(g, weights, WeightMultiplex, 10, nil)
 		p, err := Profile(fn, true, 1e-3, 0.1, 10)
 		if err != nil {
 			t.Errorf("%s: unexpected error: %v", test.name, err)

@@ -73,7 +73,12 @@ func qDirected(g graph.Directed, communities [][]graph.Node, resolution float64)
 // resolution using the Louvain algorithm. If src is nil, rand.Intn is used
 // as the random generator. louvainDirected will panic if g has any edge with negative
 // edge weight.
-func louvainDirected(g graph.Directed, resolution float64, src *rand.Rand) ReducedGraph {
+func louvainDirected(g graph.Directed, resolution float64, src *rand.Rand, options []Option) ReducedGraph {
+	var o option
+	for _, opt := range options {
+		opt(&o)
+	}
+
 	// See louvain.tex for a detailed description
 	// of the algorithm used here.
 
@@ -83,13 +88,17 @@ func louvainDirected(g graph.Directed, resolution float64, src *rand.Rand) Reduc
 		rnd = src.Intn
 	}
 	for {
-		l := newDirectedLocalMover(c, c.communities, resolution)
+		l := newDirectedLocalMover(c, c.communities, resolution, o)
 		if l == nil {
 			return c
 		}
 		if done := l.localMovingHeuristic(rnd); done {
+			if l.changed {
+				c = reduceDirected(c, l.communities)
+			}
 			return c
 		}
+		o.maxIterations = l.maxIterations
 		c = reduceDirected(c, l.communities)
 	}
 }
@@ -434,6 +443,12 @@ type directedLocalMover struct {
 	// in doi:10.1103/PhysRevE.74.016110.
 	resolution float64
 
+	// maxIterations specifies the maximum
+	// number of moves that a local mover
+	// will make. A zero values indicates
+	// no limit.
+	maxIterations int
+
 	// moved indicates that a call to
 	// move has been made since the last
 	// call to shuffle.
@@ -454,7 +469,7 @@ type directedWeights struct {
 // The node IDs of g must be contiguous in [0,n) where n is the number of
 // nodes.
 // If g has a zero edge weight sum, nil is returned.
-func newDirectedLocalMover(g *ReducedDirected, communities [][]graph.Node, resolution float64) *directedLocalMover {
+func newDirectedLocalMover(g *ReducedDirected, communities [][]graph.Node, resolution float64, o option) *directedLocalMover {
 	nodes := g.Nodes()
 	l := directedLocalMover{
 		g:             g,
@@ -464,6 +479,7 @@ func newDirectedLocalMover(g *ReducedDirected, communities [][]graph.Node, resol
 		memberships:   make([]int, len(nodes)),
 		resolution:    resolution,
 		weight:        positiveWeightFuncFor(g),
+		maxIterations: o.maxIterations,
 	}
 
 	// Calculate the total edge weight of the graph
@@ -509,6 +525,12 @@ func (l *directedLocalMover) localMovingHeuristic(rnd func(int) int) (done bool)
 				continue
 			}
 			l.move(dst, src)
+			if l.maxIterations > 0 {
+				l.maxIterations--
+				if l.maxIterations == 0 {
+					return true
+				}
+			}
 		}
 		if !l.moved {
 			return !l.changed

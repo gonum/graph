@@ -162,12 +162,17 @@ func (g DirectedLayers) Layer(l int) graph.Directed { return g[l] }
 // edge weight that does not sign-match the layer weight.
 //
 // graph.Undirect may be used as a shim to allow modularization of directed graphs.
-func louvainDirectedMultiplex(g DirectedMultiplex, weights, resolutions []float64, all bool, src *rand.Rand) *ReducedDirectedMultiplex {
+func louvainDirectedMultiplex(g DirectedMultiplex, weights, resolutions []float64, src *rand.Rand, options []Option) *ReducedDirectedMultiplex {
 	if weights != nil && len(weights) != g.Depth() {
 		panic("community: weights vector length mismatch")
 	}
 	if resolutions != nil && len(resolutions) != 1 && len(resolutions) != g.Depth() {
 		panic("community: resolutions vector length mismatch")
+	}
+
+	o := option{all: true}
+	for _, opt := range options {
+		opt(&o)
 	}
 
 	// See louvain.tex for a detailed description
@@ -179,13 +184,17 @@ func louvainDirectedMultiplex(g DirectedMultiplex, weights, resolutions []float6
 		rnd = src.Intn
 	}
 	for {
-		l := newDirectedMultiplexLocalMover(c, c.communities, weights, resolutions, all)
+		l := newDirectedMultiplexLocalMover(c, c.communities, weights, resolutions, o)
 		if l == nil {
 			return c
 		}
 		if done := l.localMovingHeuristic(rnd); done {
+			if l.changed {
+				c = reduceDirectedMultiplex(c, l.communities, weights)
+			}
 			return c
 		}
+		o.maxIterations = l.maxIterations
 		c = reduceDirectedMultiplex(c, l.communities, weights)
 	}
 }
@@ -613,6 +622,12 @@ type directedMultiplexLocalMover struct {
 	// heuristic.
 	searchAll bool
 
+	// maxIterations specifies the maximum
+	// number of moves that a local mover
+	// will make. A zero value indicates
+	// no limit.
+	maxIterations int
+
 	// moved indicates that a call to
 	// move has been made since the last
 	// call to shuffle.
@@ -628,7 +643,7 @@ type directedMultiplexLocalMover struct {
 // the graph g, a set of communities and a modularity resolution parameter. The
 // node IDs of g must be contiguous in [0,n) where n is the number of nodes.
 // If g has a zero edge weight sum, nil is returned.
-func newDirectedMultiplexLocalMover(g *ReducedDirectedMultiplex, communities [][]graph.Node, weights, resolutions []float64, all bool) *directedMultiplexLocalMover {
+func newDirectedMultiplexLocalMover(g *ReducedDirectedMultiplex, communities [][]graph.Node, weights, resolutions []float64, o option) *directedMultiplexLocalMover {
 	nodes := g.Nodes()
 	l := directedMultiplexLocalMover{
 		g:             g,
@@ -640,6 +655,7 @@ func newDirectedMultiplexLocalMover(g *ReducedDirectedMultiplex, communities [][
 		resolutions:   resolutions,
 		weights:       weights,
 		weight:        make([]func(x, y graph.Node) float64, g.Depth()),
+		maxIterations: o.maxIterations,
 	}
 
 	// Calculate the total edge weight of the graph
@@ -656,7 +672,7 @@ func newDirectedMultiplexLocalMover(g *ReducedDirectedMultiplex, communities [][
 			}
 			if weights[i] < 0 {
 				weight = negativeWeightFuncFor(g.Layer(i))
-				l.searchAll = all
+				l.searchAll = o.all
 			} else {
 				weight = positiveWeightFuncFor(g.Layer(i))
 			}
@@ -714,6 +730,12 @@ func (l *directedMultiplexLocalMover) localMovingHeuristic(rnd func(int) int) (d
 				continue
 			}
 			l.move(dst, src)
+			if l.maxIterations > 0 {
+				l.maxIterations--
+				if l.maxIterations == 0 {
+					return true
+				}
+			}
 		}
 		if !l.moved {
 			return !l.changed

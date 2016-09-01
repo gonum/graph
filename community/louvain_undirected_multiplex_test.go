@@ -308,12 +308,9 @@ tests:
 
 			before := QMultiplex(g, communities, weights, resolution)
 
-			// We test exhaustively.
-			const all = true
-
 			l := newUndirectedMultiplexLocalMover(
 				reduceUndirectedMultiplex(g, nil, weights),
-				communities, weights, resolution, all)
+				communities, weights, resolution, option{all: true, maxIterations: -1})
 			if l == nil {
 				if !math.IsNaN(floats.Sum(before)) {
 					t.Errorf("unexpected nil localMover with non-NaN Q graph: Q=%.4v", before)
@@ -346,7 +343,7 @@ tests:
 					if i == communityOf[target.ID()] {
 						continue
 					}
-					if !(all && hasNegative(weights)) {
+					if !hasNegative(weights) {
 						connected := false
 					search:
 						for l := 0; l < g.Depth(); l++ {
@@ -508,7 +505,7 @@ func TestMoveLocalUndirectedMultiplex(t *testing.T) {
 
 			r := reduceUndirectedMultiplex(reduceUndirectedMultiplex(g, nil, weights), communities, weights)
 
-			l := newUndirectedMultiplexLocalMover(r, r.communities, weights, []float64{structure.resolution}, true)
+			l := newUndirectedMultiplexLocalMover(r, r.communities, weights, []float64{structure.resolution}, option{all: true, maxIterations: -1})
 			for _, n := range structure.targetNodes {
 				dQ, dst, src := l.deltaQ(n)
 				if dQ > 0 {
@@ -555,7 +552,7 @@ func TestLouvainMultiplex(t *testing.T) {
 		// ensure the level tests are consistent.
 		src := rand.New(rand.NewSource(1))
 		for i := 0; i < louvainIterations; i++ {
-			r := ModularizeMultiplex(g, weights, nil, true, src).(*ReducedUndirectedMultiplex)
+			r := ModularizeMultiplex(g, weights, nil, src).(*ReducedUndirectedMultiplex)
 			if q := floats.Sum(QMultiplex(r, nil, weights, nil)); q > bestQ || math.IsNaN(q) {
 				bestQ = q
 				got = r
@@ -629,14 +626,14 @@ func TestNonContiguousUndirectedMultiplex(t *testing.T) {
 				t.Error("unexpected panic with non-contiguous ID range")
 			}
 		}()
-		ModularizeMultiplex(UndirectedLayers{g}, nil, nil, true, nil)
+		ModularizeMultiplex(UndirectedLayers{g}, nil, nil, nil)
 	}()
 }
 
 func BenchmarkLouvainMultiplex(b *testing.B) {
 	src := rand.New(rand.NewSource(1))
 	for i := 0; i < b.N; i++ {
-		ModularizeMultiplex(UndirectedLayers{dupGraph}, nil, nil, true, src)
+		ModularizeMultiplex(UndirectedLayers{dupGraph}, nil, nil, src)
 	}
 }
 

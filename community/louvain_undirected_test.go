@@ -315,7 +315,7 @@ tests:
 
 			before := Q(g, communities, structure.resolution)
 
-			l := newUndirectedLocalMover(reduceUndirected(g, nil), communities, structure.resolution)
+			l := newUndirectedLocalMover(reduceUndirected(g, nil), communities, structure.resolution, option{maxIterations: -1})
 			if l == nil {
 				if !math.IsNaN(before) {
 					t.Errorf("unexpected nil localMover with non-NaN Q graph: Q=%.4v", before)
@@ -510,7 +510,7 @@ func TestMoveLocalUndirected(t *testing.T) {
 
 			r := reduceUndirected(reduceUndirected(g, nil), communities)
 
-			l := newUndirectedLocalMover(r, r.communities, structure.resolution)
+			l := newUndirectedLocalMover(r, r.communities, structure.resolution, option{maxIterations: -1})
 			for _, n := range structure.targetNodes {
 				dQ, dst, src := l.deltaQ(n)
 				if dQ > 0 {

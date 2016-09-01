@@ -73,7 +73,12 @@ func qUndirected(g graph.Undirected, communities [][]graph.Node, resolution floa
 // weight.
 //
 // graph.Undirect may be used as a shim to allow modularization of directed graphs.
-func louvainUndirected(g graph.Undirected, resolution float64, src *rand.Rand) *ReducedUndirected {
+func louvainUndirected(g graph.Undirected, resolution float64, src *rand.Rand, options []Option) *ReducedUndirected {
+	var o option
+	for _, opt := range options {
+		opt(&o)
+	}
+
 	// See louvain.tex for a detailed description
 	// of the algorithm used here.
 
@@ -83,13 +88,17 @@ func louvainUndirected(g graph.Undirected, resolution float64, src *rand.Rand) *
 		rnd = src.Intn
 	}
 	for {
-		l := newUndirectedLocalMover(c, c.communities, resolution)
+		l := newUndirectedLocalMover(c, c.communities, resolution, o)
 		if l == nil {
 			return c
 		}
 		if done := l.localMovingHeuristic(rnd); done {
+			if l.changed {
+				c = reduceUndirected(c, l.communities)
+			}
 			return c
 		}
+		o.maxIterations = l.maxIterations
 		c = reduceUndirected(c, l.communities)
 	}
 }
@@ -392,6 +401,12 @@ type undirectedLocalMover struct {
 	// in doi:10.1103/PhysRevE.74.016110.
 	resolution float64
 
+	// maxIterations specifies the maximum
+	// number of moves that a local mover
+	// will make. A zero value indicates
+	// no limit.
+	maxIterations int
+
 	// moved indicates that a call to
 	// move has been made since the last
 	// call to shuffle.
@@ -407,16 +422,17 @@ type undirectedLocalMover struct {
 // the graph g, a set of communities and a modularity resolution parameter. The
 // node IDs of g must be contiguous in [0,n) where n is the number of nodes.
 // If g has a zero edge weight sum, nil is returned.
-func newUndirectedLocalMover(g *ReducedUndirected, communities [][]graph.Node, resolution float64) *undirectedLocalMover {
+func newUndirectedLocalMover(g *ReducedUndirected, communities [][]graph.Node, resolution float64, o option) *undirectedLocalMover {
 	nodes := g.Nodes()
 	l := undirectedLocalMover{
-		g:            g,
-		nodes:        nodes,
-		edgeWeightOf: make([]float64, len(nodes)),
-		communities:  communities,
-		memberships:  make([]int, len(nodes)),
-		resolution:   resolution,
-		weight:       positiveWeightFuncFor(g),
+		g:             g,
+		nodes:         nodes,
+		edgeWeightOf:  make([]float64, len(nodes)),
+		communities:   communities,
+		memberships:   make([]int, len(nodes)),
+		resolution:    resolution,
+		weight:        positiveWeightFuncFor(g),
+		maxIterations: o.maxIterations,
 	}
 
 	// Calculate the total edge weight of the graph
@@ -456,6 +472,12 @@ func (l *undirectedLocalMover) localMovingHeuristic(rnd func(int) int) (done boo
 				continue
 			}
 			l.move(dst, src)
+			if l.maxIterations > 0 {
+				l.maxIterations--
+				if l.maxIterations == 0 {
+					return true
+				}
+			}
 		}
 		if !l.moved {
 			return !l.changed
