@@ -50,7 +50,9 @@ func (ds *disjointSet) find(n graph.Node) *disjointSetNode {
 		return nil
 	}
 
-	return find(dsNode)
+	p := find(dsNode)
+	dsNode.parent = p
+	return p
 }
 
 func find(dsNode *disjointSetNode) *disjointSetNode {

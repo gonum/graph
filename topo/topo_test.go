@@ -176,7 +176,7 @@ func TestConnectedComponents(t *testing.T) {
 }
 
 // Build graph Batagelj Zaversnik graph.
-func buildBatageljZaversnikGraph() simple.Undirected {
+func buildBatageljZaversnikGraph() *simple.UndirectedGraph {
 	test := batageljZaversnikGraph
 	g := simple.NewUndirectedGraph(0, math.Inf(1))
 
