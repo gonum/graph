@@ -174,37 +174,3 @@ func TestConnectedComponents(t *testing.T) {
 		}
 	}
 }
-
-// Build graph Batagelj Zaversnik graph.
-func buildBatageljZaversnikGraph() *simple.UndirectedGraph {
-	test := batageljZaversnikGraph
-	g := simple.NewUndirectedGraph(0, math.Inf(1))
-
-	for u, e := range test {
-		if !g.Has(simple.Node(u)) {
-			g.AddNode(simple.Node(u))
-		}
-		for v := range e {
-			if !g.Has(simple.Node(v)) {
-				g.AddNode(simple.Node(v))
-			}
-			g.SetEdge(simple.Edge{F: simple.Node(u), T: simple.Node(v)})
-		}
-	}
-	return g
-}
-
-func BenchmarkConnectedComponents(b *testing.B) {
-	g := buildBatageljZaversnikGraph()
-	for i := 0; i < b.N; i++ {
-		ConnectedComponents(g)
-	}
-}
-
-// Benchmark Union Find version.
-func BenchmarkCCUF(b *testing.B) {
-	g := buildBatageljZaversnikGraph()
-	for i := 0; i < b.N; i++ {
-		ccuf(g)
-	}
-}

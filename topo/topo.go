@@ -68,10 +68,10 @@ func ConnectedComponents(g graph.Undirected) [][]graph.Node {
 	return cc
 }
 
-// ConnectedComponents: Creates a disjoint set from g, then returns
+// ConnectedComponentsUF: Creates a disjoint set from g, then returns
 // the connected components.
 // Union-find version, ref: http://www.cs.toronto.edu/~krueger/cscB63h/lectures/tut07.txt
-func ccuf(g graph.Undirected) [][]graph.Node {
+func ConnectedComponentsUF(g graph.Undirected) [][]graph.Node {
 	d := newDisjointSet()
 	for _, u := range g.Nodes() {
 		d.makeSet(u)

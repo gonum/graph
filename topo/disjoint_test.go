@@ -63,15 +63,3 @@ func TestUnion(t *testing.T) {
 		t.Error("Sets found to be disjoint after union")
 	}
 }
-
-func BenchmarkCC(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ds := newDisjointSet()
-		ds.makeSet(simple.Node(3))
-		ds.makeSet(simple.Node(5))
-
-		ds.union(ds.find(simple.Node(3)), ds.find(simple.Node(5)))
-
-		ds.connectedComponents()
-	}
-}

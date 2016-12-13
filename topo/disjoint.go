@@ -49,7 +49,7 @@ func (ds *disjointSet) find(n graph.Node) *disjointSetNode {
 	if !ok {
 		return nil
 	}
-
+	// Path compression.
 	p := find(dsNode)
 	dsNode.parent = p
 	return p
