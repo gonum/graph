@@ -51,7 +51,7 @@ func (ds *disjointSet) find(n graph.Node) *disjointSetNode {
 	}
 	// Path compression.
 	p := find(dsNode)
-	dsNode.parent = p
+	pathCompress(dsNode, p)
 	return p
 }
 
@@ -61,6 +61,16 @@ func find(dsNode *disjointSetNode) *disjointSetNode {
 	}
 
 	return dsNode.parent
+}
+
+// Traverse tree starting at dsNode, compress path by setting each node's parent pointer to parent.
+func pathCompress(dsNode *disjointSetNode, parent *disjointSetNode) {
+	if dsNode.parent == dsNode {
+		return
+	}
+	next := dsNode.parent
+	dsNode.parent = parent
+	pathCompress(next, parent)
 }
 
 // Unilons two subsets within the disjointSet.
