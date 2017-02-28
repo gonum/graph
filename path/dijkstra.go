@@ -38,8 +38,8 @@ func DijkstraFrom(u graph.Node, g graph.Graph) Shortest {
 	for Q.Len() != 0 {
 		mid := heap.Pop(&Q).(distanceNode)
 		k := path.indexOf[mid.node.ID()]
-		if mid.dist < path.dist[k] {
-			path.dist[k] = mid.dist
+		if mid.dist > path.dist[k] {
+			continue
 		}
 		for _, v := range g.From(mid.node) {
 			j := path.indexOf[v.ID()]
