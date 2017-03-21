@@ -6,20 +6,20 @@
 package dotparser
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 
 	"github.com/gonum/graph/encoding/dot/dotparser/ast"
 	"github.com/gonum/graph/encoding/dot/dotparser/internal/lexer"
 	"github.com/gonum/graph/encoding/dot/dotparser/internal/parser"
-	"github.com/pkg/errors"
 )
 
 // ParseFile parses the given Graphviz DOT file into an AST.
 func ParseFile(path string) (*ast.File, error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return ParseBytes(buf)
 }
@@ -28,7 +28,7 @@ func ParseFile(path string) (*ast.File, error) {
 func Parse(r io.Reader) (*ast.File, error) {
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return ParseBytes(buf)
 }
@@ -39,14 +39,14 @@ func ParseBytes(b []byte) (*ast.File, error) {
 	p := parser.NewParser()
 	file, err := p.Parse(l)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	f, ok := file.(*ast.File)
 	if !ok {
-		return nil, errors.Errorf("invalid file type; expected *ast.File, got %T", file)
+		return nil, fmt.Errorf("invalid file type; expected *ast.File, got %T", file)
 	}
 	if err := check(f); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	return f, nil
 }
