@@ -1,8 +1,10 @@
+// Copyright ©2017 The gonum Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package dot_test
 
 import (
-	"bytes"
-	"io/ioutil"
 	"testing"
 
 	"github.com/gonum/graph"
@@ -14,32 +16,26 @@ import (
 
 func TestRoundTrip(t *testing.T) {
 	golden := []struct {
-		path     string
+		want     string
 		directed bool
 	}{
 		{
-			path:     "testdata/directed.dot",
+			want:     directed,
 			directed: true,
 		},
 		{
-			path:     "testdata/undirected.dot",
+			want:     undirected,
 			directed: false,
 		},
 	}
-	for _, g := range golden {
-		buf, err := ioutil.ReadFile(g.path)
+	for i, g := range golden {
+		file, err := dotparser.ParseString(g.want)
 		if err != nil {
-			t.Errorf("%q: unable to read file; %v", g.path, err)
-			continue
-		}
-		want := bytes.TrimSpace(buf)
-		file, err := dotparser.ParseBytes(want)
-		if err != nil {
-			t.Errorf("%q: unable to parse DOT file; %v", g.path, err)
+			t.Errorf("i=%d: unable to parse DOT file; %v", i, err)
 			continue
 		}
 		if len(file.Graphs) != 1 {
-			t.Errorf("%q: invalid number of graphs; expected 1, got %d", g.path, len(file.Graphs))
+			t.Errorf("i=%d: invalid number of graphs; expected 1, got %d", i, len(file.Graphs))
 			continue
 		}
 		src := file.Graphs[0]
@@ -50,20 +46,39 @@ func TestRoundTrip(t *testing.T) {
 			dst = newUndirectedGraph()
 		}
 		if err := dot.Copy(dst, src); err != nil {
-			t.Errorf("%q: unable to copy DOT graph; %v", g.path, err)
+			t.Errorf("i=%d: unable to copy DOT graph; %v", i, err)
 			continue
 		}
-		got, err := dot.Marshal(dst, src.ID, "", "\t", false)
+		buf, err := dot.Marshal(dst, src.ID, "", "\t", false)
 		if err != nil {
-			t.Errorf("%q: unable to marshal graph; %v", g.path, dst)
+			t.Errorf("i=%d: unable to marshal graph; %v", i, dst)
 			continue
 		}
-		if !bytes.Equal(got, want) {
-			t.Errorf("%q: graph content mismatch; expected `%s`, got `%s`", g.path, string(want), string(got))
+		got := string(buf)
+		if got != g.want {
+			t.Errorf("i=%d: graph content mismatch; expected `%s`, got `%s`", i, g.want, got)
 			continue
 		}
 	}
 }
+
+const directed = `digraph G {
+	// Node definitions.
+	0 [label="foo 2"];
+	1 [label="bar 2"];
+
+	// Edge definitions.
+	0 -> 1 [label="baz 2"];
+}`
+
+const undirected = `graph H {
+	// Node definitions.
+	0 [label="foo 2"];
+	1 [label="bar 2"];
+
+	// Edge definitions.
+	0 -- 1 [label="baz 2"];
+}`
 
 // Below follows a minimal implementation of a graph capable of validating the
 // round-trip encoding and decoding of DOT graphs with nodes and edges
