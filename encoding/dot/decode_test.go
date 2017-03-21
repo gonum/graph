@@ -5,13 +5,13 @@
 package dot_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/encoding/dot"
+	"github.com/gonum/graph/encoding/dot/dotparser"
 	"github.com/gonum/graph/simple"
-	dotparser "github.com/graphism/dot"
-	"github.com/pkg/errors"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -174,7 +174,7 @@ func (n *Node) UnmarshalDOTAttr(attr dot.Attribute) error {
 	case "label":
 		n.Label = attr.Value
 	default:
-		return errors.Errorf("unable to unmarshal node DOT attribute with key %q", attr.Key)
+		return fmt.Errorf("unable to unmarshal node DOT attribute with key %q", attr.Key)
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func (e *Edge) UnmarshalDOTAttr(attr dot.Attribute) error {
 	case "label":
 		e.Label = attr.Value
 	default:
-		return errors.Errorf("unable to unmarshal edge DOT attribute with key %q", attr.Key)
+		return fmt.Errorf("unable to unmarshal edge DOT attribute with key %q", attr.Key)
 	}
 	return nil
 }

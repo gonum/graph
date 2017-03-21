@@ -6,11 +6,9 @@ package dot
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/gonum/graph"
-	"github.com/graphism/dot/ast"
-	"github.com/pkg/errors"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
 )
 
 // Builder is a graph that can have user-defined nodes and edges added.
@@ -33,7 +31,16 @@ type UnmarshalerAttr interface {
 
 // Copy copies the nodes and edges from the Graphviz AST source graph to the
 // destination graph. Edge direction is maintained if present.
-func Copy(dst Builder, src *ast.Graph) error {
+func Copy(dst Builder, src *ast.Graph) (err error) {
+	defer func() {
+		switch e := recover().(type) {
+		case nil:
+		case error:
+			err = e
+		default:
+			panic(e)
+		}
+	}()
 	gen := &generator{
 		directed: src.Directed,
 		ids:      make(map[string]graph.Node),
@@ -41,10 +48,7 @@ func Copy(dst Builder, src *ast.Graph) error {
 	for _, stmt := range src.Stmts {
 		gen.addStmt(dst, stmt)
 	}
-	if len(gen.errs) > 0 {
-		return gen.errs
-	}
-	return nil
+	return err
 }
 
 // A generator keeps track of the information required for generating a gonum
@@ -60,8 +64,6 @@ type generator struct {
 	// Stack of start indices into the subgraph node slice. The top element
 	// corresponds to the start index of the active (or inner-most) subgraph.
 	subStart []int
-	// List of errors encountered during decoding.
-	errs errlist
 }
 
 // node returns the gonum node corresponding to the given dot AST node ID,
@@ -94,7 +96,7 @@ func (gen *generator) addStmt(dst Builder, stmt ast.Stmt) {
 					Value: attr.Val,
 				}
 				if err := n.UnmarshalDOTAttr(a); err != nil {
-					gen.errs = append(gen.errs, errors.Wrapf(err, "unable to unmarshal node DOT attribute (%v)", a))
+					panic(fmt.Errorf("unable to unmarshal node DOT attribute (%s=%s)", a.Key, a.Value))
 				}
 			}
 		}
@@ -127,7 +129,7 @@ func (gen *generator) addEdgeStmt(dst Builder, e *ast.EdgeStmt) {
 						Value: attr.Val,
 					}
 					if err := edge.UnmarshalDOTAttr(a); err != nil {
-						gen.errs = append(gen.errs, errors.Wrapf(err, "unable to unmarshal edge DOT attribute (%v)", a))
+						panic(fmt.Errorf("unable to unmarshal edge DOT attribute (%s=%s)", a.Key, a.Value))
 					}
 				}
 			}
@@ -155,7 +157,7 @@ func (gen *generator) addVertex(dst Builder, v ast.Vertex) []graph.Node {
 // addEdge adds the given edge to the graph, and returns its set of nodes.
 func (gen *generator) addEdge(dst Builder, to *ast.Edge) []graph.Node {
 	if !gen.directed && to.Directed {
-		gen.errs = append(gen.errs, errors.Errorf("directed edge to %v in undirected graph", to.Vertex))
+		panic(fmt.Errorf("directed edge to %v in undirected graph", to.Vertex))
 	}
 	fs := gen.addVertex(dst, to.Vertex)
 	if to.To != nil {
@@ -218,19 +220,4 @@ func (gen *generator) isInSubgraph() bool {
 // within the context of a subgraph.
 func (gen *generator) appendSubgraphNode(n graph.Node) {
 	gen.subNodes = append(gen.subNodes, n)
-}
-
-// errlist represents a list of errors, and implements the error interface.
-type errlist []error
-
-// Error returns a string representation of the list of errors.
-func (es errlist) Error() string {
-	if len(es) < 1 {
-		return ""
-	}
-	var ss []string
-	for _, e := range es {
-		ss = append(ss, e.Error())
-	}
-	return strings.Join(ss, "; ")
 }
