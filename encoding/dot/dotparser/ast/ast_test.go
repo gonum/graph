@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/graphism/dot"
-	"github.com/graphism/dot/ast"
+	"github.com/gonum/graph/encoding/dot/dotparser"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
 )
 
 func TestParseFile(t *testing.T) {
@@ -51,7 +51,7 @@ func TestParseFile(t *testing.T) {
 		},
 	}
 	for _, g := range golden {
-		file, err := dot.ParseFile(g.in)
+		file, err := dotparser.ParseFile(g.in)
 		if err != nil {
 			t.Errorf("%q: unable to parse file; %v", g.in, err)
 			continue

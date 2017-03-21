@@ -1,9 +1,9 @@
-package dot
+package dotparser
 
 import (
 	"fmt"
 
-	"github.com/graphism/dot/ast"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
 	"github.com/pkg/errors"
 )
 

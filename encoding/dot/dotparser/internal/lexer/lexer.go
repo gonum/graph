@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"unicode/utf8"
 
-	// "github.com/graphism/dot/internal/util"
-	"github.com/graphism/dot/internal/token"
+	// "github.com/gonum/graph/encoding/dot/dotparser/internal/util"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
 )
 
 const (

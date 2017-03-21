@@ -6,8 +6,8 @@ import (
 	"bytes"
 	"fmt"
 
-	parseError "github.com/graphism/dot/internal/errors"
-	"github.com/graphism/dot/internal/token"
+	parseError "github.com/gonum/graph/encoding/dot/dotparser/internal/errors"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
 )
 
 const (

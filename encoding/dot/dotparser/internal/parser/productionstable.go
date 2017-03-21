@@ -3,8 +3,8 @@
 package parser
 
 import (
-	"github.com/graphism/dot/ast"
-	"github.com/graphism/dot/internal/astx"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/astx"
 )
 
 type (

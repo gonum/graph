@@ -1,13 +1,13 @@
-// Package dot provides access to Graphviz DOT files.
-package dot
+// Package dotparser implements a parser for Graphviz DOT files.
+package dotparser
 
 import (
 	"io"
 	"io/ioutil"
 
-	"github.com/graphism/dot/ast"
-	"github.com/graphism/dot/internal/lexer"
-	"github.com/graphism/dot/internal/parser"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/lexer"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/parser"
 	"github.com/pkg/errors"
 )
 

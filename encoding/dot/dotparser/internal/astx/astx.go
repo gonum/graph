@@ -5,8 +5,8 @@ package astx
 import (
 	"strings"
 
-	"github.com/graphism/dot/ast"
-	"github.com/graphism/dot/internal/token"
+	"github.com/gonum/graph/encoding/dot/dotparser/ast"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
 	"github.com/pkg/errors"
 )
 

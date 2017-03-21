@@ -5,7 +5,7 @@ package lexer
 import (
 	"fmt"
 
-	"github.com/graphism/dot/internal/token"
+	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
 )
 
 type ActionTable [NumStates]ActionRow
