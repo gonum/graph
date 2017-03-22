@@ -81,15 +81,15 @@ func TestParseFile(t *testing.T) {
 
 // Verify that all statements implement the Stmt interface.
 var (
-	_ ast.Stmt = &ast.NodeStmt{}
-	_ ast.Stmt = &ast.EdgeStmt{}
-	_ ast.Stmt = &ast.AttrStmt{}
-	_ ast.Stmt = &ast.Attr{}
-	_ ast.Stmt = &ast.Subgraph{}
+	_ ast.Stmt = (*ast.NodeStmt)(nil)
+	_ ast.Stmt = (*ast.EdgeStmt)(nil)
+	_ ast.Stmt = (*ast.AttrStmt)(nil)
+	_ ast.Stmt = (*ast.Attr)(nil)
+	_ ast.Stmt = (*ast.Subgraph)(nil)
 )
 
 // Verify that all vertices implement the Vertex interface.
 var (
-	_ ast.Vertex = &ast.Node{}
-	_ ast.Vertex = &ast.Subgraph{}
+	_ ast.Vertex = (*ast.Node)(nil)
+	_ ast.Vertex = (*ast.Subgraph)(nil)
 )

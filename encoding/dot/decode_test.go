@@ -2,15 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package dot_test
+package dot
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/gonum/graph"
-	"github.com/gonum/graph/encoding/dot"
-	dotparser "github.com/gonum/graph/formats/dot"
+	"github.com/gonum/graph/formats/dot"
 	"github.com/gonum/graph/simple"
 )
 
@@ -29,7 +28,7 @@ func TestRoundTrip(t *testing.T) {
 		},
 	}
 	for i, g := range golden {
-		file, err := dotparser.ParseString(g.want)
+		file, err := dot.ParseString(g.want)
 		if err != nil {
 			t.Errorf("i=%d: unable to parse DOT file; %v", i, err)
 			continue
@@ -39,17 +38,17 @@ func TestRoundTrip(t *testing.T) {
 			continue
 		}
 		src := file.Graphs[0]
-		var dst dot.Builder
+		var dst Builder
 		if g.directed {
-			dst = newDirectedGraph()
+			dst = newDotDirectedGraph()
 		} else {
-			dst = newUndirectedGraph()
+			dst = newDotUndirectedGraph()
 		}
-		if err := dot.Copy(dst, src); err != nil {
+		if err := Copy(dst, src); err != nil {
 			t.Errorf("i=%d: unable to copy DOT graph; %v", i, err)
 			continue
 		}
-		buf, err := dot.Marshal(dst, src.ID, "", "\t", false)
+		buf, err := Marshal(dst, src.ID, "", "\t", false)
 		if err != nil {
 			t.Errorf("i=%d: unable to marshal graph; %v", i, dst)
 			continue
@@ -84,142 +83,124 @@ const undirected = `graph H {
 // round-trip encoding and decoding of DOT graphs with nodes and edges
 // containing DOT attributes.
 
-// DirectedGraph extends simple.DirectedGraph to add NewNode and NewEdge
+// dotDirectedGraph extends simple.DirectedGraph to add NewNode and NewEdge
 // methods for creating user-defined nodes and edges.
 //
-// DirectedGraph implements the dot.Builder interface.
-type DirectedGraph struct {
+// dotDirectedGraph implements the dot.Builder interface.
+type dotDirectedGraph struct {
 	*simple.DirectedGraph
 }
 
-// newDirectedGraph returns a new directed capable of creating user-defined
+// newDotDirectedGraph returns a new directed capable of creating user-defined
 // nodes and edges.
-func newDirectedGraph() *DirectedGraph {
-	return &DirectedGraph{
-		DirectedGraph: simple.NewDirectedGraph(0, 0),
-	}
+func newDotDirectedGraph() *dotDirectedGraph {
+	return &dotDirectedGraph{DirectedGraph: simple.NewDirectedGraph(0, 0)}
 }
 
 // NewNode adds a new node with a unique node ID to the graph.
-func (g *DirectedGraph) NewNode() graph.Node {
-	n := &Node{
-		Node: simple.Node(g.NewNodeID()),
-	}
+func (g *dotDirectedGraph) NewNode() graph.Node {
+	n := &dotNode{Node: simple.Node(g.NewNodeID())}
 	g.AddNode(n)
 	return n
 }
 
 // NewEdge adds a new edge from the source to the destination node to the graph,
 // or returns the existing edge if already present.
-func (g *DirectedGraph) NewEdge(from, to graph.Node) graph.Edge {
+func (g *dotDirectedGraph) NewEdge(from, to graph.Node) graph.Edge {
 	if e := g.Edge(from, to); e != nil {
 		return e
 	}
-	e := &Edge{
-		Edge: simple.Edge{F: from, T: to},
-	}
+	e := &dotEdge{Edge: simple.Edge{F: from, T: to}}
 	g.SetEdge(e)
 	return e
 }
 
-// UndirectedGraph extends simple.UndirectedGraph to add NewNode and NewEdge
+// dotUndirectedGraph extends simple.UndirectedGraph to add NewNode and NewEdge
 // methods for creating user-defined nodes and edges.
 //
-// UndirectedGraph implements the dot.Builder interface.
-type UndirectedGraph struct {
+// dotUndirectedGraph implements the dot.Builder interface.
+type dotUndirectedGraph struct {
 	*simple.UndirectedGraph
 }
 
-// newUndirectedGraph returns a new undirected capable of creating user-defined
-// nodes and edges.
-func newUndirectedGraph() *UndirectedGraph {
-	return &UndirectedGraph{
-		UndirectedGraph: simple.NewUndirectedGraph(0, 0),
-	}
+// newDotUndirectedGraph returns a new undirected capable of creating user-
+// defined nodes and edges.
+func newDotUndirectedGraph() *dotUndirectedGraph {
+	return &dotUndirectedGraph{UndirectedGraph: simple.NewUndirectedGraph(0, 0)}
 }
 
 // NewNode adds a new node with a unique node ID to the graph.
-func (g *UndirectedGraph) NewNode() graph.Node {
-	n := &Node{
-		Node: simple.Node(g.NewNodeID()),
-	}
+func (g *dotUndirectedGraph) NewNode() graph.Node {
+	n := &dotNode{Node: simple.Node(g.NewNodeID())}
 	g.AddNode(n)
 	return n
 }
 
 // NewEdge adds a new edge from the source to the destination node to the graph,
 // or returns the existing edge if already present.
-func (g *UndirectedGraph) NewEdge(from, to graph.Node) graph.Edge {
+func (g *dotUndirectedGraph) NewEdge(from, to graph.Node) graph.Edge {
 	if e := g.Edge(from, to); e != nil {
 		return e
 	}
-	e := &Edge{
-		Edge: simple.Edge{F: from, T: to},
-	}
+	e := &dotEdge{Edge: simple.Edge{F: from, T: to}}
 	g.SetEdge(e)
 	return e
 }
 
-// Node extends simple.Node with a label field to test round-trip encoding and
-// decoding of node DOT label attributes.
-type Node struct {
+// dotNode extends simple.Node with a label field to test round-trip encoding
+// and decoding of node DOT label attributes.
+type dotNode struct {
 	simple.Node
 	// Node label.
 	Label string
 }
 
 // UnmarshalDOTAttr decodes a single DOT attribute.
-func (n *Node) UnmarshalDOTAttr(attr dot.Attribute) error {
-	switch attr.Key {
-	case "label":
-		n.Label = attr.Value
-	default:
+func (n *dotNode) UnmarshalDOTAttr(attr Attribute) error {
+	if attr.Key != "label" {
 		return fmt.Errorf("unable to unmarshal node DOT attribute with key %q", attr.Key)
 	}
+	n.Label = attr.Value
 	return nil
 }
 
 // DOTAttributes returns the DOT attributes of the node.
-func (n *Node) DOTAttributes() []dot.Attribute {
-	var attrs []dot.Attribute
-	if len(n.Label) > 0 {
-		attr := dot.Attribute{
-			Key:   "label",
-			Value: n.Label,
-		}
-		attrs = append(attrs, attr)
+func (n *dotNode) DOTAttributes() []Attribute {
+	if len(n.Label) == 0 {
+		return nil
 	}
-	return attrs
+	attr := Attribute{
+		Key:   "label",
+		Value: n.Label,
+	}
+	return []Attribute{attr}
 }
 
-// Edge extends simple.Edge with a label field to test round-trip encoding and
+// dotEdge extends simple.Edge with a label field to test round-trip encoding and
 // decoding of edge DOT label attributes.
-type Edge struct {
+type dotEdge struct {
 	simple.Edge
 	// Edge label.
 	Label string
 }
 
 // UnmarshalDOTAttr decodes a single DOT attribute.
-func (e *Edge) UnmarshalDOTAttr(attr dot.Attribute) error {
-	switch attr.Key {
-	case "label":
-		e.Label = attr.Value
-	default:
-		return fmt.Errorf("unable to unmarshal edge DOT attribute with key %q", attr.Key)
+func (e *dotEdge) UnmarshalDOTAttr(attr Attribute) error {
+	if attr.Key != "label" {
+		return fmt.Errorf("unable to unmarshal node DOT attribute with key %q", attr.Key)
 	}
+	e.Label = attr.Value
 	return nil
 }
 
 // DOTAttributes returns the DOT attributes of the edge.
-func (e *Edge) DOTAttributes() []dot.Attribute {
-	var attrs []dot.Attribute
-	if len(e.Label) > 0 {
-		attr := dot.Attribute{
-			Key:   "label",
-			Value: e.Label,
-		}
-		attrs = append(attrs, attr)
+func (e *dotEdge) DOTAttributes() []Attribute {
+	if len(e.Label) == 0 {
+		return nil
 	}
-	return attrs
+	attr := Attribute{
+		Key:   "label",
+		Value: e.Label,
+	}
+	return []Attribute{attr}
 }
