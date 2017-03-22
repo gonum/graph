@@ -9,6 +9,7 @@ import (
 
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/formats/dot/ast"
+	"golang.org/x/tools/container/intsets"
 )
 
 // Builder is a graph that can have user-defined nodes and edges added.
@@ -197,14 +198,14 @@ func (gen *generator) popSubgraph() []graph.Node {
 // unique returns the set of unique nodes contained within ns.
 func unique(ns []graph.Node) []graph.Node {
 	var nodes []graph.Node
-	m := make(map[int]bool)
+	var set intsets.Sparse
 	for _, n := range ns {
 		id := n.ID()
-		if m[id] {
+		if set.Has(id) {
 			// skip duplicate node
 			continue
 		}
-		m[id] = true
+		set.Insert(id)
 		nodes = append(nodes, n)
 	}
 	return nodes
