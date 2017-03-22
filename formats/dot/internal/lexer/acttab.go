@@ -9,7 +9,7 @@ package lexer
 import (
 	"fmt"
 
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
+	"github.com/gonum/graph/formats/dot/internal/token"
 )
 
 type ActionTable [NumStates]ActionRow

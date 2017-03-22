@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gonum/graph/encoding/dot/dotparser/ast"
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
+	"github.com/gonum/graph/formats/dot/ast"
+	"github.com/gonum/graph/formats/dot/internal/token"
 )
 
 // === [ File ] ================================================================

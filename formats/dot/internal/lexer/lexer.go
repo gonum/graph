@@ -11,8 +11,8 @@ import (
 	"io/ioutil"
 	"unicode/utf8"
 
-	// "github.com/gonum/graph/encoding/dot/dotparser/internal/util"
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/token"
+	// "github.com/gonum/graph/formats/dot/internal/util"
+	"github.com/gonum/graph/formats/dot/internal/token"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/encoding/dot"
-	"github.com/gonum/graph/encoding/dot/dotparser"
+	dotparser "github.com/gonum/graph/formats/dot"
 	"github.com/gonum/graph/simple"
 )
 

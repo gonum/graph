@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gonum/graph"
-	"github.com/gonum/graph/encoding/dot/dotparser/ast"
+	"github.com/gonum/graph/formats/dot/ast"
 )
 
 // Builder is a graph that can have user-defined nodes and edges added.

@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package dotparser implements a parser for Graphviz DOT files.
-package dotparser
+// Package dot implements a parser for Graphviz DOT files.
+package dot
 
 import (
 	"fmt"
 	"io"
 	"io/ioutil"
 
-	"github.com/gonum/graph/encoding/dot/dotparser/ast"
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/lexer"
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/parser"
+	"github.com/gonum/graph/formats/dot/ast"
+	"github.com/gonum/graph/formats/dot/internal/lexer"
+	"github.com/gonum/graph/formats/dot/internal/parser"
 )
 
 // ParseFile parses the given Graphviz DOT file into an AST.

@@ -7,8 +7,8 @@
 package parser
 
 import (
-	"github.com/gonum/graph/encoding/dot/dotparser/ast"
-	"github.com/gonum/graph/encoding/dot/dotparser/internal/astx"
+	"github.com/gonum/graph/formats/dot/ast"
+	"github.com/gonum/graph/formats/dot/internal/astx"
 )
 
 type (

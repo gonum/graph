@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package dotparser
+package dot
 
 import (
 	"fmt"
 
-	"github.com/gonum/graph/encoding/dot/dotparser/ast"
+	"github.com/gonum/graph/formats/dot/ast"
 )
 
 // check validates the semantics of the given DOT file.
