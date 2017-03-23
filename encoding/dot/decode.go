@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gonum/graph"
+	"github.com/gonum/graph/formats/dot"
 	"github.com/gonum/graph/formats/dot/ast"
 	"golang.org/x/tools/container/intsets"
 )
@@ -28,6 +29,19 @@ type Builder interface {
 type UnmarshalerAttr interface {
 	// UnmarshalDOTAttr decodes a single DOT attribute.
 	UnmarshalDOTAttr(attr Attribute) error
+}
+
+// Unmarshal parses the Graphviz DOT-encoded data and stores the result in dst.
+// For DOT-files containing more than one graph, use dot.Copy.
+func Unmarshal(data []byte, dst Builder) error {
+	file, err := dot.ParseBytes(data)
+	if err != nil {
+		return err
+	}
+	if len(file.Graphs) != 1 {
+		return fmt.Errorf("invalid number of graphs; expected 1, got %d", len(file.Graphs))
+	}
+	return Copy(dst, file.Graphs[0])
 }
 
 // Copy copies the nodes and edges from the Graphviz AST source graph to the

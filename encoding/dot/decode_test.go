@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gonum/graph"
-	"github.com/gonum/graph/formats/dot"
 	"github.com/gonum/graph/simple"
 )
 
@@ -28,27 +27,18 @@ func TestRoundTrip(t *testing.T) {
 		},
 	}
 	for i, g := range golden {
-		file, err := dot.ParseString(g.want)
-		if err != nil {
-			t.Errorf("i=%d: unable to parse DOT file; %v", i, err)
-			continue
-		}
-		if len(file.Graphs) != 1 {
-			t.Errorf("i=%d: invalid number of graphs; expected 1, got %d", i, len(file.Graphs))
-			continue
-		}
-		src := file.Graphs[0]
 		var dst Builder
 		if g.directed {
 			dst = newDotDirectedGraph()
 		} else {
 			dst = newDotUndirectedGraph()
 		}
-		if err := Copy(dst, src); err != nil {
-			t.Errorf("i=%d: unable to copy DOT graph; %v", i, err)
+		data := []byte(g.want)
+		if err := Unmarshal(data, dst); err != nil {
+			t.Errorf("i=%d: unable to unmarshal DOT graph; %v", i, err)
 			continue
 		}
-		buf, err := Marshal(dst, src.ID, "", "\t", false)
+		buf, err := Marshal(dst, "", "", "\t", false)
 		if err != nil {
 			t.Errorf("i=%d: unable to marshal graph; %v", i, dst)
 			continue
@@ -61,7 +51,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-const directed = `digraph G {
+const directed = `digraph {
 	// Node definitions.
 	0 [label="foo 2"];
 	1 [label="bar 2"];
@@ -70,7 +60,7 @@ const directed = `digraph G {
 	0 -> 1 [label="baz 2"];
 }`
 
-const undirected = `graph H {
+const undirected = `graph {
 	// Node definitions.
 	0 [label="foo 2"];
 	1 [label="bar 2"];
