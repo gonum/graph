@@ -41,12 +41,12 @@ func Unmarshal(data []byte, dst Builder) error {
 	if len(file.Graphs) != 1 {
 		return fmt.Errorf("invalid number of graphs; expected 1, got %d", len(file.Graphs))
 	}
-	return Copy(dst, file.Graphs[0])
+	return copyGraph(dst, file.Graphs[0])
 }
 
-// Copy copies the nodes and edges from the Graphviz AST source graph to the
-// destination graph. Edge direction is maintained if present.
-func Copy(dst Builder, src *ast.Graph) (err error) {
+// copyGraph copies the nodes and edges from the Graphviz AST source graph to
+// the destination graph. Edge direction is maintained if present.
+func copyGraph(dst Builder, src *ast.Graph) (err error) {
 	defer func() {
 		switch e := recover().(type) {
 		case nil:
