@@ -32,7 +32,6 @@ type UnmarshalerAttr interface {
 }
 
 // Unmarshal parses the Graphviz DOT-encoded data and stores the result in dst.
-// For DOT-files containing more than one graph, use dot.Copy.
 func Unmarshal(data []byte, dst Builder) error {
 	file, err := dot.ParseBytes(data)
 	if err != nil {
