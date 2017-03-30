@@ -191,7 +191,7 @@ func (gen *generator) pushSubgraph() {
 	gen.subStart = append(gen.subStart, len(gen.subNodes))
 }
 
-// pushSubgraph pops the node start index of the active subgraph from the stack,
+// popSubgraph pops the node start index of the active subgraph from the stack,
 // and returns the nodes processed since.
 func (gen *generator) popSubgraph() []graph.Node {
 	// Get nodes processed since the subgraph became active.
