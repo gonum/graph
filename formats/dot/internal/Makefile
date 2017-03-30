@@ -1,6 +1,7 @@
 gen: dot.bnf
 	gocc $<
 	# TODO: Remove once https://github.com/goccmack/gocc/issues/36 gets resolved.
+	./paste_copyright.bash
 	find . -type f -name '*.go' | xargs goimports -w
 
 debug_lexer: dot.bnf
