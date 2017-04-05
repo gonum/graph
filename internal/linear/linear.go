@@ -27,6 +27,9 @@ func (s *NodeStack) Pop() graph.Node {
 // Push adds the node n to the stack at the last position.
 func (s *NodeStack) Push(n graph.Node) { *s = append(*s, n) }
 
+// Reset clears the stack for reuse.
+func (s *NodeStack) Reset() { (*s) = (*s)[:0] }
+
 // NodeQueue implements a FIFO queue.
 type NodeQueue struct {
 	head int

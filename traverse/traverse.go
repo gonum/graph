@@ -179,7 +179,7 @@ func (d *DepthFirst) Visited(n graph.Node) bool {
 
 // Reset resets the state of the traverser for reuse.
 func (d *DepthFirst) Reset() {
-	d.stack = d.stack[:0]
+	d.stack.Reset()
 	if d.visited != nil {
 		d.visited.Clear()
 	}
