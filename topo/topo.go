@@ -67,3 +67,23 @@ func ConnectedComponents(g graph.Undirected) [][]graph.Node {
 
 	return cc
 }
+
+// ConnectedComponentsUF: Creates a disjoint set from g, then returns
+// the connected components.
+// Union-find version, ref: http://www.cs.toronto.edu/~krueger/cscB63h/lectures/tut07.txt
+func ConnectedComponentsUF(g graph.Undirected) [][]graph.Node {
+	d := newDisjointSet()
+	for _, u := range g.Nodes() {
+		d.makeSet(u)
+	}
+	for _, u := range g.Nodes() {
+		for _, v := range g.From(u) {
+			dsu := d.find(u)
+			dsv := d.find(v)
+			if dsu != dsv {
+				d.union(dsu, dsv)
+			}
+		}
+	}
+	return d.connectedComponents()
+}
